@@ -1,0 +1,278 @@
+
+/* availability-search Page */
+
+.search-by-name #edit-search-api-views-fulltext-wrapper {
+    width: 350px;
+}
+
+.search-by-name .views-exposed-form .views-exposed-widget .form-submit {
+    margin-top: 2.9em;
+}
+
+.pane-properties-index-panel-pane-4 .view-properties-index .views-row .property-details-2{
+    float: right;
+}
+.page-availability-search .view-display-id-panel_pane_3 .property-row:hover .featured-image-with-description .property-info {
+
+    background: rgba(0, 0, 0, 0.7);
+}
+
+/* Map Tab panel */
+
+.view-properties-index.view-display-id-panel_pane_2 .leaflet-container .leaflet-popup {
+    min-height: auto;
+}
+
+.view-properties-index.view-display-id-panel_pane_2 .leaflet-container .leaflet-popup .leaflet-popup-content {
+    text-align: center;
+}
+
+.page-availability-search .view-display-id-panel_pane_2 .property-info{
+    margin-top: 10px;
+}
+
+.page-availability-search .view-display-id-panel_pane_2 .property-info .property-types-table .types table {
+    width: 100%; }
+
+.page-availability-search .view-display-id-panel_pane_2 .property-info .property-types-table .types .type-row {
+    width: 100%;
+    margin-top: 10px;
+}
+.page-availability-search .view-display-id-panel_pane_2 .property-info .property-types-table .types .type-row .row-element.name {
+    width: 38%;
+    margin-left: 2%;
+    text-align: left;
+    padding-left: 5px;
+}
+.page-availability-search .view-display-id-panel_pane_2 .property-info .property-types-table .types .type-row .row-element {
+    width: 20%;
+    padding: 7px;
+    text-align: center;
+}
+
+.page-availability-search .view-display-id-panel_pane_2 .property-info .property-types-table .types .type-icons .icon {
+    width: 20%;
+    height: 25px;
+}
+
+.page-availability-search .view-display-id-panel_pane_2 .property-info .property-types-table .types .type-icons .icon.name {
+    width: 40%;
+    text-indent: -9999999px;
+}
+
+.page-availability-search .view-display-id-panel_pane_2 .property-info .property-types-table .types .type-icons .icon.capacity {
+    background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/small/capacity_gray.png") center center no-repeat;
+    /*background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/small/white_users.svg") center center no-repeat, linear-gradient(transparent, transparent);*/
+    text-indent: -9999999px;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+.page-availability-search .view-display-id-panel_pane_2 .property-info .property-types-table .types .type-icons .icon.single-beds {
+    background: url("../images/small/single-beds_gray.png") center center no-repeat;
+    /*background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/small/beds_gray.svg") center center no-repeat, linear-gradient(transparent, transparent);*/
+    background-position-x: center, 0%;
+    background-position-y: center, 0%;
+    background-repeat: no-repeat, repeat;
+    text-indent: -9999999px;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.page-availability-search .view-display-id-panel_pane_2 .property-info .property-types-table .types .type-icons .icon.double-beds {
+    background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/small/beds_gray.png") center center no-repeat;
+    /*background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/small/beds_gray.svg") center center no-repeat, linear-gradient(transparent, transparent);*/
+    background-position-x: center, 0%;
+    background-position-y: center, 0%;
+    background-repeat: no-repeat, repeat;
+    text-indent: -9999999px;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+.page-availability-search .view-display-id-panel_pane_2 .property-info .property-types-table .types .type-icons .icon.price {
+    background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/small/price_gray.png") center center no-repeat;
+    /*background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/small/money.svg") center center no-repeat, linear-gradient(transparent, transparent);*/
+    background-position-x: center, 0%;
+    background-position-y: center, 0%;
+    background-repeat: no-repeat, repeat;
+    text-indent: -9999999px;
+    background-repeat: no-repeat;
+    background-position: center center;
+}
+
+/* End Map Panel */
+
+.page-availability-search .view-display-id-panel_pane_3 .property-row .featured-image-with-description .property-info .property-types-table {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* END availability-search Page */
+
+
+
+/* Listing page Properties */
+
+.page-listing .pane-roomify-owner-social-pages .pane-content {
+    padding: 0 5px;
+}
+/* END Lisitng Page Properties */
+
+
+/* Directory Search */
+
+.pane-properties-index-panel-pane-4 .view-publicity-index .views-row .property-details .short-description {
+
+    margin-bottom: 10px;
+    line-height: normal;
+    text-align: justify;
+    font-size: 14px;
+    font-style: italic;
+}
+
+
+.pane-properties-index-panel-pane-4 .view-publicity-index .views-row .property-details .name{
+    margin-bottom: 0;
+}
+
+.pane-properties-index-panel-pane-4 .view-publicity-index .views-row .property-details table {
+    font-size: 14px;
+    margin-bottom: 10px;
+
+}
+
+.pane-properties-index-panel-pane-4 .view-properties-index .views-row .property-details table.tags-publicity td {
+    font-size: 12px !important;
+}
+
+.pane-properties-index-panel-pane-4 .view-publicity-index .views-row .property-details table a{
+    text-decoration: none;
+    color: #666;
+}
+.pane-properties-index-panel-pane-4 .view-publicity-index .views-row .property-details table a:hover{
+    color: #666;
+    text-decoration:underline;
+}
+
+.full-horary{
+    width: 100%;
+    color: #666;
+}
+.pane-properties-index-panel-pane-4 .view-publicity-index .views-row .property-details .oh-current-closed,
+.pane-properties-index-panel-pane-4 .view-publicity-index .views-row .property-details .oh-current-open{
+    font-weight: bold;
+    float: right;
+}
+.pane-properties-index-panel-pane-4 .view-publicity-index .views-row .property-details table .publicity-type.property-type::before {
+    height: 19px;
+    margin-right: 5px;
+    left: 0;
+}
+.pane-properties-index-panel-pane-4 .view-publicity-index .views-row .property-details table td{
+    padding: 2px 0 0 0;
+    vertical-align: baseline;
+}
+
+
+#properties-tabs .panel_sl_content-2 {
+    bottom: 25px;
+    z-index: 12;
+}
+
+span.select2{
+    width: 100% !important;
+}
+
+
+
+/* END Directory Search */
+
+/* Listing page Publicity */
+
+.pane-publicity-slideshow {
+    background: white;
+    padding: 0;
+    border: 1px solid #ececec;
+    border-right: none;
+}
+@media (min-width: 992px) {
+    .pane-publicity-slideshow {
+        height: 635px; } }
+
+.page-listing .pane-node-field-sp-short-description {
+    text-align: justify;
+    font-weight: 300;
+    font-style: italic;
+    margin: 20px 0;
+    color: #989898;
+    line-height: 1.37em;
+    font-size: 17px;
+}
+
+.pane-publicity-slideshow .slick--display--thumbnail .slick-arrow {
+    display: none !important;
+}
+
+.pane-publicity-slideshow .slick-prev.slick-arrow {
+    background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/arrow_left.png") 0 50% no-repeat;
+    background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/arrow_left.svg") center center no-repeat, linear-gradient(transparent, transparent);
+    display: inline-block;
+    position: absolute;
+    top: 50%;
+    width: 30px;
+    height: 30px;
+    margin-top: 0;
+    text-indent: -9999px;
+    border: 0;
+    background-size: contain;
+    left: 12px;
+}
+
+.pane-publicity-slideshow .slick-next.slick-arrow {
+    background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/arrow_right.png") 0 50% no-repeat;
+    background: url("/profiles/roomify/themes/roomify/roomify_travel/assets/images/arrow_right.svg") center center no-repeat, linear-gradient(transparent, transparent);
+    display: inline-block;
+    position: absolute;
+    top: 50%;
+    width: 30px;
+    height: 30px;
+    margin-top: 0;
+    text-indent: -9999px;
+    border: 0;
+    background-size: contain;
+    right: 12px;
+}
+
+.pane-publicity-slideshow .slick-wrapper {
+    margin-bottom: 70px;
+}
+
+.pane-publicity-slideshow .slick--display--thumbnail {
+    top: 22px;
+}
+.pane-publicity-slideshow #slick-asnavfor-thumbnail-slider.slick__slider.slick-slider {
+    margin-left: 25px;
+    margin-right: 25px;
+}
+
+.pane-featured-publicity-panel-pane-1 .unslick, .pane-featured-properties-panel-pane-3 .slide__content {
+
+    display: block;
+    min-height: 500px;
+    text-align: justify;
+}
+
+.pane-featured-publicity-panel-pane-1 .unslick, .pane-featured-properties-panel-pane-3 .slide__content .views-field-field-review-rating {
+    margin: 10px auto 0 auto;
+    width: 85px;
+}
+
+.pane-featured-publicity-panel-pane-1 .unslick, .pane-featured-properties-panel-pane-3 .slide__content .views-field-name {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+
+/* End Listing page Publicity */

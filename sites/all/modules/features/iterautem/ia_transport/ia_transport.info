@@ -1,0 +1,7 @@
+name = ia_transport
+description = Manage Transport for Iter Autem
+core = 7.x
+package = Iterautem
+version = 7.x-1.0
+features[features_api][] = api:2
+project path = sites/all/modules/features/iterautem

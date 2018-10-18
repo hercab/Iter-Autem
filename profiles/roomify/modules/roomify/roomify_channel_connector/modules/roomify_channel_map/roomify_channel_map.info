@@ -1,0 +1,16 @@
+name = Roomify Channel Map
+description = Maps a property to a distribution Channel
+core = 7.x
+
+package = Roomify
+
+dependencies[] = bat_event
+dependencies[] = commerce_price
+dependencies[] = list
+
+files[] = roomify_channel_map.admin.inc
+files[] = roomify_channel_map_type.admin.inc
+files[] = views/roomify_channel_map.views.inc
+files[] = views/roomify_channel_map_handler_delete_link_field.inc
+files[] = views/roomify_channel_map_handler_edit_link_field.inc
+files[] = roomify_channel_map.fields.inc

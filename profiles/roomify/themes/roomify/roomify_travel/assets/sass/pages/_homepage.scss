@@ -1,0 +1,813 @@
+body.node-type-homepage {
+  background: #FFFFFF;
+  .select2-selection.select2-selection--single {
+    border-radius: 2px;
+    border: 1px solid rgb(212, 211, 211);
+    font-weight: 300;
+    text-transform: uppercase;
+  }
+  .select2.select2-container {
+    @media (max-width: $screen-xs-max) {
+      width: 100%;
+    }
+  }
+  strong {
+    font-weight: 400;
+  }
+  .tabs--primary {
+    position: absolute;
+    top: 75px;
+    z-index: 3;
+    color: white;
+    border-bottom: 0;
+  }
+  .panel-content-top {
+    position: relative;
+  }
+  .main-container {
+    padding-top: 0;
+    position: relative;
+  }
+  // Slider
+  .view-homepage.view-display-id-panel_pane_1,
+  .view-homepage-travel.view-display-id-panel_pane_1 {
+    .views-field-field-homepage-slideshow {
+      img {
+        width: 100%;
+        position: relative;
+      }
+      &:after, &:before {
+        position: absolute;
+        opacity: 0;
+        transition: all 0.5s;
+        -webkit-transition: all 0.5s;
+      }
+      &:before {
+        opacity: 1;
+        content: attr(data-content);
+        width: 100%;
+        color: #fff;
+        z-index: 1;
+        bottom: 0;
+        padding: 4px 10px;
+        text-align: center;
+        box-sizing: border-box;
+        -moz-box-sizing: border-box;
+        @media (max-width: 900px) {
+          opacity: 0;
+        }
+      }
+    }
+    .slick.slick--view--homepage-travel {
+      position: relative;
+    }
+    .slick-prev.slick-arrow {
+      background: url("../images/chevron_left.png") 0 50% no-repeat;
+      background: url("../images/chevron_left.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      position: absolute;
+      top: calc(45% - 30px);
+      width: 30px;
+      height: 30px;
+      margin-top: 0;
+      text-indent: -9999px;
+      border: 0;
+      background-size: contain;
+      left: 12px;
+      z-index: 3;
+      @media (max-width: $screen-xs) {
+        display: none !important;
+      }
+    }
+    .slick-next.slick-arrow {
+      background: url("../images/chevron_right.png") 0 50% no-repeat;
+      background: url("../images/chevron_right.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      position: absolute;
+      top: calc(45% - 30px);
+      width: 30px;
+      height: 30px;
+      margin-top: 0;
+      text-indent: -9999px;
+      border: 0;
+      background-size: contain;
+      right: 12px;
+      z-index: 3;
+      @media (max-width: $screen-xs) {
+        display: none !important;
+      }
+    }
+  }
+
+  .pane-node-field-homepage-intro-text {
+    position: absolute;
+    top: calc(30% - 35px);
+    z-index: 2;
+    left: 0;
+    right: 0;
+    color: white;
+    text-shadow: 1px 1px #151515;
+    @media (max-width: $screen-lg) {
+      top: calc(25% - 35px);
+    }
+    @media (max-width: $screen-sm) {
+      display: none;
+    }
+    @media (min-width: $screen-sm-max) {
+      -webkit-animation-name: fadeIn;
+      -moz-animation-name: fadeIn;
+      -ms-animation-name: fadeIn;
+      -o-animation-name: fadeIn;
+      animation-name: fadeIn;
+      -webkit-animation-iteration-count: 1;
+      -moz-animation-iteration-count: 1;
+      -ms-animation-iteration-count: 1;
+      -o-animation-iteration-count: 1;
+      animation-iteration-count: 1;
+      -webkit-animation-duration: 2s;
+      -moz-animation-duration: 2s;
+      -ms-animation-duration: 2s;
+      -o-animation-duration: 2s;
+      animation-duration: 2s;
+      -webkit-animation-delay: 0.4s;
+      -moz-animation-delay: 0.4s;
+      -ms-animation-delay: 0.4s;
+      -o-animation-delay: 0.4s;
+      animation-delay: 0.4s;
+      -webkit-animation-timing-function: ease;
+      -moz-animation-timing-function: ease;
+      -ms-animation-timing-function: ease;
+      -o-animation-timing-function: ease;
+      animation-timing-function: ease;
+      -webkit-animation-fill-mode: both;
+      -moz-animation-fill-mode: both;
+      -ms-animation-fill-mode: both;
+      -o-animation-fill-mode: both;
+      animation-fill-mode: both;
+      -webkit-backface-visibility: hidden;
+      -moz-backface-visibility: hidden;
+      -ms-backface-visibility: hidden;
+      -o-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+  }
+  .pane-roomify-listing-availability-search-block-roomify-property-search {
+    top: calc(50% - 60px);
+    width: 100%;
+    margin: 0 auto;
+    max-width: 1200px;
+    left: 0;
+    position: absolute;
+    right: 0;
+    background: rgba(0,0,0,0.4);
+    padding: 50px 6px 30px 22px;
+    @media (min-width: $screen-sm-max) {
+      -webkit-animation-name: fadeIn;
+      -moz-animation-name: fadeIn;
+      -ms-animation-name: fadeIn;
+      -o-animation-name: fadeIn;
+      animation-name: fadeIn;
+      -webkit-animation-iteration-count: 1;
+      -moz-animation-iteration-count: 1;
+      -ms-animation-iteration-count: 1;
+      -o-animation-iteration-count: 1;
+      animation-iteration-count: 1;
+      -webkit-animation-duration: 2s;
+      -moz-animation-duration: 2s;
+      -ms-animation-duration: 2s;
+      -o-animation-duration: 2s;
+      animation-duration: 2s;
+      -webkit-animation-delay: 0.4s;
+      -moz-animation-delay: 0.4s;
+      -ms-animation-delay: 0.4s;
+      -o-animation-delay: 0.4s;
+      animation-delay: 0.4s;
+      -webkit-animation-timing-function: ease;
+      -moz-animation-timing-function: ease;
+      -ms-animation-timing-function: ease;
+      -o-animation-timing-function: ease;
+      animation-timing-function: ease;
+      -webkit-animation-fill-mode: both;
+      -moz-animation-fill-mode: both;
+      -ms-animation-fill-mode: both;
+      -o-animation-fill-mode: both;
+      animation-fill-mode: both;
+      -webkit-backface-visibility: hidden;
+      -moz-backface-visibility: hidden;
+      -ms-backface-visibility: hidden;
+      -o-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+    @media (max-width: 1440px) {
+      max-width: 1128px;
+    }
+    @media (max-width: 1200px) {
+      max-width: 900px;
+    }
+    @media (max-width: 1100px) {
+      max-width: 768px;
+    }
+    @media (max-width: 900px) {
+      position: relative;
+      top: 0;
+      border-radius: 0;
+      background: #0b1418;
+      width: 100%;
+      max-width: 100%;
+    }
+    form#property-bat-facets-availability {
+      position: relative;
+      .form-wrapper {
+        label {
+          display: none !important;
+        }
+        input, select, .form-control {
+          text-transform: uppercase;
+          font-weight: 300;
+        }
+        .search-availability-submit {
+          margin-top: 0;
+          button {
+            text-transform: uppercase;
+          }
+        }
+      }
+    }
+  }
+  .pane-homepage-blogposts-panel-pane-1,
+  .pane-featured-properties-panel-pane-3,
+  .pane-featured-properties-panel-pane-4,
+  .pane-featured-properties-panel-pane-5,
+  .pane-featured-properties-panel-pane-6,
+  .pane-featured-areas-panel-pane-1,
+  .pane-featured-areas-panel-pane-2,
+  .pane-node-field-homepage-main-text {
+    display: inline-block;
+    width: 100%;
+    padding-top: 55px;
+    padding-bottom: 55px;
+    .pane-title {
+      margin-bottom: 45px;
+      text-align: center;
+    }
+  }
+  .pane-homepage-panel-pane-2 {
+    display: inline-block;
+    width: 100%;
+    padding-top: 35px;
+    padding-bottom: 35px;
+  }
+  .pane-node-field-homepage-main-text .pane-content {
+    max-width: 1200px;
+    display: table;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+.pane-homepage-panel-pane-2 {
+  .view-homepage {
+    @include make-row();
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: 0 10px;
+    div[class*="col-"] {
+      padding-left: 7px;
+      padding-right: 7px;
+    }
+    .views-row {
+      display: inline-block;
+      float: left;
+      margin-bottom: 12px;
+      &[class*="col-"] {
+        padding-left: 6px;
+        padding-right: 6px;
+      }
+      img {
+        border-radius: 0;
+        border: none;
+      }
+      &.small {
+        margin-bottom: 8px;
+        .overlay .content {
+          font-size: 20px;
+          top: 45%;
+        }
+      }
+      .hovereffect a .overlay {
+        opacity: 1;
+        background: transparent;
+      }
+      .hovereffect a:hover .overlay {
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+    }
+  }
+}
+
+/* CAROUSEL */
+.pane-featured-properties-panel-pane-3 {
+  display: inline-block;
+  width: 100%;
+  padding-bottom: 20px;
+  .overlay {
+    pointer-events: none;
+  }
+  .views-row {
+    max-width: 340px;
+  }
+  .view-featured-properties.view-display-id-panel_pane_3 {
+    margin: 0 auto;
+    max-width: 1200px;
+    @media (max-width: $screen-sm-max) {
+      max-width: 340px;
+    }
+  }
+  .unslick,
+  .slide__content {
+    margin: 0 auto;
+    display: table;
+    max-width: 340px;
+    width: 100%;
+    padding: 10px;
+    background: white;
+    border: 1px solid #ECECEC;
+    position: relative;
+  }
+  .slick--view--featured-properties {
+    position: relative;
+  }
+  .views-field-field-sp-featured-image {
+    overflow: hidden;
+  }
+  /* Zoom In #1 */
+  .views-field-field-sp-featured-image img {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+    -webkit-transition: 500ms ease-in-out;
+    transition: 500ms ease-in-out;
+    margin: 0 auto;
+    border-radius: 0px;
+  }
+  .views-field-field-sp-featured-image:hover img {
+    -webkit-transform: scale(1.2);
+    transform: scale(1.2);
+  }
+  .slick-next.slick-arrow {
+    background: url("../images/chevron_right.png") 0 50% no-repeat;
+    background: url("../images/chevron_right.svg") center center no-repeat, linear-gradient(transparent, transparent);
+    display: inline-block;
+    position: absolute;
+    top: calc(45% - 15px);
+    width: 30px;
+    height: 30px;
+    margin-top: 0;
+    text-indent: -9999px;
+    border: 0;
+    background-size: contain;
+    right: 16px;
+    @media (min-width: $screen-md) {
+      right: 45px !important;
+    }
+  }
+  .slick-prev.slick-arrow {
+    background: url("../images/chevron_left.png") 0 50% no-repeat;
+    background: url("../images/chevron_left.svg") center center no-repeat, linear-gradient(transparent, transparent);
+    display: inline-block;
+    position: absolute;
+    top: calc(45% - 15px);
+    width: 30px;
+    height: 30px;
+    margin-top: 0;
+    text-indent: -9999px;
+    border: 0;
+    background-size: contain;
+    left: 16px;
+    @media (min-width: $screen-md) {
+      left: 45px !important;
+    }
+  }
+}
+
+.pane-homepage-blogposts-panel-pane-1 {
+  display: inline-block;
+  width: 100%;
+  .blog-col {
+    display: table;
+    margin: 15px auto;
+  }
+  .view-homepage-blogposts.view-display-id-panel_pane_1 {
+    margin: 0 auto;
+    max-width: 1200px;
+    .views-field-field-featured-image {
+      img {
+        margin: 0 auto;
+      }
+    }
+   .views-field-title-field {
+      max-width: 380px;
+      width: 100%;
+      display: table;
+      margin: 0 auto;
+      margin-top: 15px;
+      h4 {
+        font-size: 18px;
+        font-weight: 400;
+        line-height: 1.35em;
+      }
+    }
+    .views-field-body {
+      max-width: 380px;
+      width: 100%;
+      display: table;
+      margin: 0 auto;
+      margin-top: 5px;
+    }
+    .view-footer {
+      display: inline-block;
+      margin-top: 40px;
+      text-align: right;
+      width: 100%;
+    }
+  }
+}
+
+
+/* GRID VIEW */
+.pane-featured-properties-panel-pane-5,
+.pane-featured-properties-panel-pane-3,
+.pane-featured-properties-panel-pane-4 {
+  display: inline-block;
+  width: 100%;
+  .property-col {
+    display: table;
+    margin: 15px auto;
+    @media(max-width: $screen-sm-max) {
+      width: auto;
+      float: none;
+      padding: 0 25px;
+    }
+    img {
+      width: 100%;
+    }
+    .overlay {
+      pointer-events: none;
+    }
+    @media (max-width: $screen-xs) {
+      padding: 0;
+    }
+  }
+  .view-featured-properties.view-display-id-panel_pane_5,
+  .view-featured-properties.view-display-id-panel_pane_6,
+  .view-featured-properties.view-display-id-panel_pane_3,
+  .view-featured-properties.view-display-id-panel_pane_4 {
+    margin: 0 auto;
+    max-width: 1200px;
+  }
+  .row {
+    margin: 0;
+  }
+  .property-info {
+    pointer-events: none;
+    position: absolute;
+    bottom: 0;
+    background: transparent;
+    font-size: 16px;
+    text-transform: uppercase;
+    text-align: left;
+    max-width: 380px;
+    display: table;
+    margin: 0 auto;
+    color: white;
+    background-color: rgba(0,0,0,0);
+    width: 100%;
+    padding: 8px 10px;
+    border-radius: 0px 0px 3px 3px;
+    background: -moz-linear-gradient(top, rgba(0,0,0,0) 0%, rgba(0,0,0,0.75) 100%); /* FF3.6-15 */
+    background: -webkit-linear-gradient(top, rgba(0,0,0,0) 0%,rgba(0,0,0,0.75) 100%); /* Chrome10-25,Safari5.1-6 */
+    background: linear-gradient(to bottom, rgba(0,0,0,0) 0%,rgba(0,0,0,0.75) 100%); /* W3C, IE10+, FF16+, Chrome26+, Opera12+, Safari7+ */
+    filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#00000000', endColorstr='#a6000000',GradientType=0 ); /* IE6-9 */
+    table {
+      width: 100%;
+    }
+    .property-name {
+      width: 70%;
+      vertical-align: middle;
+      max-width: 200px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      .location {
+        font-size: 12px;
+        text-transform: capitalize;
+        margin-top: 2px;
+        a {
+          color: white;
+          text-decoration: none;
+          &:hover {
+            text-decoration: underline;
+          }
+        }
+        &:before {
+          background: url("../images/location_white.png") center center no-repeat;
+          background: url("../images/location_white.svg") center center no-repeat, linear-gradient(transparent, transparent);
+          content: "";
+          display: inline-block;
+          width: 15px;
+          height: 15px;
+          margin-right: 1px;
+          top: 3px;
+          left: -2px;
+          position: relative;
+        }
+        &:empty {
+          &:before {
+            display: none;
+          }
+        }
+      }
+    }
+    .starting-price {
+      width: 30%;
+      text-align: right;
+      vertical-align: middle;
+      font-weight: 400;
+      text-align: center;
+      .starting-from {
+        font-size: 12px;
+        display: inline-block;
+        font-style: italic;
+        text-transform: lowercase;
+        width: 100%;
+      }
+      .price {
+        display:inline-block;
+        width: 100%;
+        color: #0cea11;
+        text-shadow: 1px 1px #00570e;
+      }
+    }
+  }
+  .views-field-field-sp-short-description {
+    text-align: center;
+    max-width: 30px;
+    display: table;
+    margin: 10px auto;
+  }
+  .views-field-field-sp-featured-image {
+    overflow: hidden;
+    -webkit-mask-image: -webkit-radial-gradient(circle, white, black);
+    max-width: 380px;
+    display: table;
+    margin: 0 auto;
+  }
+  /* Zoom In #1 */
+  .views-field-field-sp-featured-image img {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+    -webkit-transition: 500ms ease-in-out;
+    transition: 500ms ease-in-out;
+    margin: 0 auto;
+    border-radius: 0;
+  }
+  .views-field-field-sp-featured-image:hover img {
+    -webkit-transform: scale(1.2);
+    transform: scale(1.2);
+  }
+  .view-featured-properties.view-display-id-panel_pane_5,
+  .view-featured-properties.view-display-id-panel_pane_6 {
+    .hovereffect .overlay .content {
+      top: 40%;
+    }
+    .row {
+      margin: 0;
+    }
+    .property-info {
+      max-width: 380px;
+    }
+    .views-field-field-sp-featured-image,
+    .views-field-field-sp-short-description {
+      max-width: 380px;
+    }
+  }
+}
+
+.pane-featured-areas-panel-pane-2,
+.pane-featured-areas-panel-pane-1 {
+  background: white;
+  width: 100%;
+  display: inline-block;
+  img {
+    border: none;
+  }
+  .overlay {
+    pointer-events: none;
+  }
+  .view-display-id-panel_pane_2,
+  .view-display-id-panel_pane_1 {
+    .row {
+      margin: 0;
+    }
+    margin: 0 auto;
+    max-width: 1200px;
+    .area-col {
+      display: table;
+      margin: 15px auto;
+      @media(max-width: $screen-sm-max) {
+        width: auto;
+        float: none;
+        padding: 0 15px;
+      }
+    }
+    .views-field-name {
+      text-align: center;
+      padding-bottom: 8px;
+      font-weight: 400;
+      font-size: 16px;
+      text-transform: uppercase;
+      text-align: center;
+      max-width: 380px;
+      display: table;
+      margin: 0 auto;
+      color: white;
+      background: #0b1418;
+      width: 100%;
+      padding: 18px 10px;
+    }
+    .views-field-field-area-featured-image {
+      overflow: hidden;
+      -webkit-mask-image: -webkit-radial-gradient(circle, white, black);
+      max-width: 380px;
+      width: 100%;
+      display: table;
+      margin: 0 auto;
+      img {
+        width: 100%;
+      }
+    }
+    /* Zoom In #1 */
+    .views-field-field-area-featured-image img {
+      -webkit-transform: scale(1);
+      transform: scale(1);
+      -webkit-transition: 500ms ease-in-out;
+      transition: 500ms ease-in-out;
+      margin: 0 auto;
+    }
+    .views-field-field-area-featured-image:hover img {
+      -webkit-transform: scale(1.2);
+      transform: scale(1.2);
+    }
+  }
+}
+// Offers.
+.pane-homepage-offers-panel-pane-2 {
+  background: white;
+  width: 100%;
+  display: inline-block;
+  padding-top: 40px;
+  padding-bottom: 60px;
+  .view-homepage-offers {
+    margin-left: -15px;
+    margin-right: -15px;
+    margin: 0 auto;
+    max-width: 1200px;
+    padding: 0 10px;
+    .views-row {
+      display: inline-block;
+      margin-bottom: 25px;
+      width: 100%;
+    }
+    .views-field-title {
+      display: inline-block;
+      margin-bottom: 40px;
+      @media (max-width: $screen-sm) {
+        margin-bottom: 20px;
+      }
+      a {
+        color: #444444;
+      }
+    }
+    .views-field-field-offer-image {
+      max-width: 450px;
+      display: inline-block;
+      float: left;
+      margin-right: 20px;
+      margin-bottom: 20px;
+    }
+    .views-field-field-offer-description {
+      font-size: 18px;
+      .views-more-link {
+        text-decoration: underline;
+        margin-top: 25px;
+        font-style: italic;
+        outline: none;
+        display: block;
+        text-align: right;
+      }
+    }
+  }
+}
+
+
+// Tight Homepage
+.node-type-homepage.homepage-tight {
+  .pane-node-field-homepage-main-text {
+    @include make-row();
+    background: white;
+    display: flex;
+    width: auto;
+    padding-top: 100px;
+    padding-bottom: 80px;
+  }
+  .pane-roomify-listing-availability-search-block-roomify-property-search {
+    position: relative;
+    width: 100%;
+    margin: 0 auto;
+    bottom: 1px;
+    max-width: 100%;
+    background: #f1f1f1;
+    border-radius: 0;
+    z-index: 1;
+    @media (max-width: $screen-xs) {
+      padding-bottom: 40px;
+    }
+    &:before {
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 30px 50px 0 50px;
+      border-color: #ffffff transparent transparent transparent;
+      content: '';
+      position: absolute;
+      bottom: -31px;
+      left: 0;
+      display: table;
+      right: 0;
+      margin: 0 auto;
+    }
+    &:after {
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 30px 50px 0 50px;
+      border-color: #f1f1f1 transparent transparent transparent;
+      content: '';
+      position: absolute;
+      bottom: -30px;
+      left: 0;
+      display: table;
+      right: 0;
+      margin: 0 auto;
+    }
+    form {
+      max-width: 1200px;
+      display: table;
+      margin: 0 auto;
+      width: 100%;
+      &#property-bat-facets-availability .form-wrapper {
+        input, select, .form-control {
+          background: #ffffff;
+          font-weight: 300;
+        }
+      }
+    }
+  }
+}
+
+.node-type-homepage.homepage-video {
+  .pane-node-field-homepage-video {
+    max-height: 660px;
+    background: #f1f1f1;
+    .field-name-field-homepage-video {
+      max-height: 660px;
+      overflow: hidden;
+    }
+    img,
+    video {
+      width: 100%;
+    }
+  }
+  .pane-roomify-listing-availability-search-block-roomify-property-search {
+    @media (min-width: $screen-sm) {
+      bottom: 0;
+    }
+  }
+  .pane-roomify-listing-availability-search-block-roomify-property-search {
+    @media (min-width: $screen-sm-max) {
+      -webkit-animation-name: fadeIn;
+      -moz-animation-name: fadeIn;
+      -ms-animation-name: fadeIn;
+      -o-animation-name: fadeIn;
+      animation-name: fadeIn;
+      -webkit-animation-duration: 0s;
+      -moz-animation-duration: 0s;
+      -ms-animation-duration: 0s;
+      -o-animation-duration: 0s;
+      animation-duration: 0s;
+      -webkit-animation-delay: 0s;
+      -moz-animation-delay: 0s;
+      -ms-animation-delay: 0s;
+      -o-animation-delay: 0s;
+      animation-delay: 0s;
+    }
+  }
+}

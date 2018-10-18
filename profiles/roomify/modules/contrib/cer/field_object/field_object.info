@@ -1,0 +1,10 @@
+name = "Field Object"
+description = "Provides a field type that can refer to field instances."
+
+core = "7.x"
+
+dependencies[] = options
+
+files[] = includes/FieldChain.inc
+files[] = includes/FieldHierarchy.inc
+files[] = includes/FieldInstance.inc

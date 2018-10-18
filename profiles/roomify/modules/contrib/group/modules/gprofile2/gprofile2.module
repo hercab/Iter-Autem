@@ -1,0 +1,121 @@
+<?php
+/**
+ * @file
+ * Contains Group's implementation of the Profile2 module hooks and forms.
+ */
+
+/**
+ * Implements hook_entity_info_alter().
+ */
+function gprofile2_entity_info_alter(&$entity_info) {
+  $entity_info['profile2']['group entity'] = 'multiple';
+}
+
+/**
+ * Implements hook_group_permission().
+ */
+function gprofile2_group_permission() {
+  $permissions = array();
+
+  foreach (profile2_get_types() as $type) {
+    $replace = array('%profile2_type' => $type->label);
+
+    $permissions["view $type->type profile2"] = array(
+      'title' => t('%profile2_type: View profile2', $replace),
+    );
+    $permissions["edit own $type->type profile2"] = array(
+      'title' => t('%profile2_type: Edit own profile2', $replace),
+    );
+    $permissions["edit any $type->type profile2"] = array(
+      'title' => t('%profile2_type: Edit any profile2', $replace),
+    );
+    $permissions["delete own $type->type profile2"] = array(
+      'title' => t('%profile2_type: Delete own profile2', $replace),
+    );
+    $permissions["delete any $type->type profile2"] = array(
+      'title' => t('%profile2_type: Delete any profile2', $replace),
+    );
+  }
+
+  return $permissions;
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function gprofile2_entity_insert($entity, $type) {
+  if ($type == 'group_membership') {
+    foreach (profile2_load_by_user($entity->uid) as $profile2) {
+      $profile2->group[] = $entity->gid;
+      profile2_save($profile2);
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function gprofile2_entity_delete($entity, $type) {
+  if ($type == 'group_membership') {
+    foreach (profile2_load_by_user($entity->uid) as $profile2) {
+      if (isset($profile2->group)) {
+        foreach ($profile2->group as $id => $gid) {
+          if ($entity->gid == $gid) {
+            unset($profile2->group[$id]);
+          }
+        }
+        profile2_save($profile2);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function gprofile2_entity_presave($entity, $type) {
+  if ($type == 'profile2') {
+    foreach (group_memberships(array('uid' => $entity->uid)) as $group_membership) {
+      $entity->group[] = $group_membership->gid;
+    }
+  }
+}
+
+/**
+ * Implements hook_profile2_access().
+ */
+function gprofile2_profile2_access($op, $profile = NULL, $account = NULL) {
+  if (isset($profile) && ($type_name = $profile->type)) {
+    $profile2 = profile2_load_by_user($profile->uid, $type_name);
+
+    if (!empty($profile2->group)) {
+      $account = isset($account) ? $account : $GLOBALS['user'];
+
+      foreach ($profile2->group as $gid) {
+        $group = group_load($gid);
+
+        $has_access = group_access('administer group', $group, $account);
+
+        switch ($op) {
+          case "view":
+            $has_access = $has_access || group_access("view $type_name profile2", $group, $account);
+            break;
+
+          case "edit":
+          case "delete":
+            $has_access = $has_access || group_access("$op any $type_name profile2", $group, $account);
+
+            if ($account->uid == $profile->uid) {
+              $has_access = $has_access || group_access("$op own $type_name profile2", $group, $account);
+            }
+
+            break;
+        }
+
+        if ($has_access) {
+          return TRUE;
+        }
+      }
+    }
+  }
+}

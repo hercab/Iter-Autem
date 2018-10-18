@@ -1,0 +1,399 @@
+.node-type-properties-list {
+  .pane-node-title-field {
+    text-align: center;
+    background: white;
+    font-size: 26px;
+    width: 100%;
+    max-width: 1600px;
+    padding: 30px 15px;
+    font-weight: 400;
+    margin: 0 auto;
+    position: relative;
+    border-bottom: 1px solid #ececec;
+    h1 {
+      font-size: 26px;
+    }
+    &:before {
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 30px 50px 0 50px;
+      border-color: #ececec transparent transparent transparent;
+      content: '';
+      position: absolute;
+      bottom: -31px;
+      left: 0;
+      display: table;
+      right: 0;
+      margin: 0 auto;
+    }
+    &:after {
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 30px 50px 0 50px;
+      border-color: #ffffff transparent transparent transparent;
+      content: '';
+      position: absolute;
+      bottom: -30px;
+      left: 0;
+      display: table;
+      right: 0;
+      margin: 0 auto;
+    }
+  }
+  .main-container {
+    padding-left: 0;
+    padding-right: 0;
+    padding-top: 0;
+    overflow: hidden;
+    .container:first-child {
+      width: 100%;
+      padding: 0;
+    }
+  }
+  .panel-content-top {
+    margin-bottom: 50px;
+  }
+  .highlights,
+  .panel-content-wrapper .panel_sl_content,
+  .panel-content-wrapper .panel_sl_content-2 .inner,
+  .panel-content-bottom {
+    display: table;
+    margin: 0 auto;
+    width: 1200px;
+    float: none;
+    @media (max-width: 1440px) {
+      max-width: 1128px;
+    }
+    @media (max-width: 1200px) {
+      max-width: 900px;
+    }
+    @media (max-width: 1100px) {
+      max-width: 768px;
+    }
+    @media (max-width: 900px) {
+      position: relative;
+      top: 0;
+      width: 100%;
+      max-width: 100%;
+    }
+  }
+  .highlights {
+    margin-bottom: 30px;
+  }
+  .pane-node-field-sp-highlight-image1,
+  .pane-node-field-sp-highlight-image2,
+  .pane-node-field-sp-highlight-image3,
+  .pane-node-field-sp-highlight-image1-cap,
+  .pane-node-field-sp-highlight-image2-cap,
+  .pane-node-field-sp-highlight-image3-cap {
+    img {
+      margin: 0px auto 20px auto;
+      border: 1px solid #ececec;
+      border-radius: 2px;
+    }
+    .field-type-text {
+      margin-bottom: 50px;
+      text-align: center;
+    }
+  }
+
+  .panel_sl_content-2 {
+    background: white;
+    padding: 25px;
+    margin-bottom: 70px;
+    display: inline-block;
+    width: 100%;
+    position: relative;
+    border-bottom: 1px solid #ececec;
+    &:before {
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 30px 50px 0 50px;
+      border-color: #ececec transparent transparent transparent;
+      content: '';
+      position: absolute;
+      bottom: -31px;
+      left: 0;
+      display: table;
+      right: 0;
+      margin: 0 auto;
+    }
+    &:after {
+      width: 0;
+      height: 0;
+      border-style: solid;
+      border-width: 30px 50px 0 50px;
+      border-color: #ffffff transparent transparent transparent;
+      content: '';
+      position: absolute;
+      bottom: -30px;
+      left: 0;
+      display: table;
+      right: 0;
+      margin: 0 auto;
+    }
+    &:empty {
+      display: none;
+    }
+    .pane-block.panel-pane {
+      @media (max-width: $screen-sm) {
+        margin-bottom: 50px;
+      }
+      .pane-title {
+        position: relative;
+        margin-bottom: 25px;
+        &:after {
+          position: absolute;
+          content: '';
+          bottom: -8px;
+          height: 2px;
+          width: 100px;
+          background: $brand-primary;;
+          left: 0;
+        }
+      }
+      li {
+        display: inline-block;
+        float: left;
+        margin-right: 15px;
+        a {
+          color: initial;
+        }
+        input {
+          margin-right: 6px;
+        }
+      }
+    }
+  }
+  .field-name-field-pl-featured-image .background-image-formatter {
+    height: 460px;
+    background-repeat: no-repeat;
+    background-size: cover;
+    max-width: 1600px;
+    margin: 0 auto;
+    background-position: center;
+    @media (max-width: $screen-xs) {
+      height: 200px;
+    }
+  }
+  .pane-node-body {
+    display: table;
+    margin: 0 auto;
+    width: 100%;
+    margin-top: 35px;
+    margin-bottom: 70px;
+    float: none;
+  }
+  .pane-properties-index-panel-pane-5 {
+    .view-properties-index {
+      .views-row {
+        margin-bottom: 30px;
+        img {
+          border-radius: 4px 4px 0 0;
+        }
+        .views-field-average-rating {
+          position: absolute;
+          bottom: 190px;
+          right: 24px;
+        }
+        .property-info {
+          height: 220px;
+          background: white;
+          padding: 25px;
+          padding-left: 15px;
+          padding-right: 15px;
+          max-width: 540px;
+          border-radius: 0px 0px 4px 4px;
+          display: inline-block;
+          width: 100%;
+          .info {
+            position: absolute;
+            bottom: 20px;
+            table {
+              max-width: 200px;
+            }
+            .single-beds {
+              position: relative;
+              color: #a8a8a8;
+              font-size: 10px;
+              width: 45px;
+              &:before {
+                background: url("../images/light_gray/single_beds.png") center center no-repeat;
+                background: url("../images/light_gray/single_beds.svg") center center no-repeat, linear-gradient(transparent, transparent);
+                content: "";
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                margin-right: 7px;
+                top: 6px;
+                left: 2px;
+                position: relative;
+              }
+              &:empty {
+                &:before {
+                  display: none;
+                }
+              }
+            }
+            .double-beds {
+              position: relative;
+              color: #a8a8a8;
+              font-size: 10px;
+              width: 45px;
+              &:before {
+                background: url("../images/light_gray/double_beds.png") center center no-repeat;
+                background: url("../images/light_gray/double_beds.svg") center center no-repeat, linear-gradient(transparent, transparent);
+                content: "";
+                display: inline-block;
+                width: 22px;
+                height: 22px;
+                margin-right: 7px;
+                top: 7px;
+                left: 2px;
+                position: relative;
+              }
+              &:empty {
+                &:before {
+                  display: none;
+                }
+              }
+            }
+            .capacity {
+              position: relative;
+              color: #a8a8a8;
+              font-weight: bold;
+              font-size: 10px;
+              width: 45px;
+              &:before {
+                background: url("../images/light_gray/users.png") center center no-repeat;
+                background: url("../images/light_gray/users.svg") center center no-repeat, linear-gradient(transparent, transparent);
+                content: "";
+                display: inline-block;
+                width: 20px;
+                height: 20px;
+                margin-right: 7px;
+                top: 5px;
+                left: 2px;
+                position: relative;
+              }
+              &:empty {
+                &:before {
+                  display: none;
+                }
+              }
+            }
+            .bathrooms {
+              position: relative;
+              color: #a8a8a8;
+              width: 45px;
+              font-size: 10px;
+              &:before {
+                background: url("../images/light_gray/bath.png") center center no-repeat;
+                background: url("../images/light_gray/bath.svg") center center no-repeat, linear-gradient(transparent, transparent);
+                content: "";
+                display: inline-block;
+                width: 20px;
+                height: 17px;
+                margin-right: 7px;
+                top: 5px;
+                left: 2px;
+                position: relative;
+              }
+              &:empty {
+                &:before {
+                  display: none;
+                }
+              }
+            }
+          }
+        }
+        .content {
+          width: 72%;
+          display: inline-block;
+          float: left;
+          height: 220px;
+          padding-right: 15px;
+        }
+        .sidebar {
+          width: 28%;
+          display: inline-block;
+          float: left;
+          height: 220px;
+          padding-top: 25px;
+          padding-left: 15px;
+          position: relative;
+          &:before {
+            width: 1px;
+            background: #ececec;
+            height: calc(100% - 30px);
+            position: absolute;
+            left: 0;
+            top: 0;
+            content: '';
+          }
+        }
+        .reviews-number {
+          color: #bdbdbd;
+          font-size: 12px;
+          font-weight: 500;
+          text-align: center;
+        }
+        .title {
+          font-size: 18px;
+          margin-bottom: 5px;;
+          margin-top: 0;
+        }
+        .description {
+          font-size: 13px;
+          margin-bottom: 0;
+        }
+        .price {
+          text-align: center;
+          color: #4CAF50;
+          font-size: 13px;
+          position: absolute;
+          bottom: 40px;
+          .starting-from {
+            display: inline-block;
+            width: 100%;
+          }
+        }
+      }
+    }
+  }
+  .pane-properties-index-panel-pane-5 {
+    margin-top: 50px;
+    margin-bottom: 30px;
+    display: inline-block;
+    width: 100%;
+  }
+  .pane-properties-list-panel-pane-1 {
+    display: inline-block;
+    width: 100%;
+    margin-top: 60px;
+    padding: 40px;
+    background: white;
+    border: 2px solid #efefef;
+    border-radius: 4px;
+    .page-column {
+      margin-bottom: 20px;
+      .hovereffect a .overlay {
+        opacity: 1;
+        background: transparent;
+      }
+      .hovereffect a:hover .overlay {
+        background-color: rgba(0, 0, 0, 0.5);
+      }
+      .hovereffect .overlay .content {
+        font-size: 22px;
+        top: 47%;
+      }
+    }
+    .pane-title {
+      margin-bottom: 30px;
+    }
+  }
+}

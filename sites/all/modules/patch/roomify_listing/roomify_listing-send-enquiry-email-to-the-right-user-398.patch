@@ -1,0 +1,38 @@
+From 9157badf523c4b57bca08ca33e4971ceb9671f03 Mon Sep 17 00:00:00 2001
+From: Yunior Cabrera <yuniorcabrerahdez@gmail.com>
+Date: Mon, 17 Sep 2018 11:51:59 -0500
+Subject: [PATCH 1/1] fixed isuee #398 send enquiry email to the right user
+
+---
+ .../roomify/modules/roomify/roomify_listing/roomify_listing.module  | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/profiles/roomify/modules/roomify/roomify_listing/roomify_listing.module b/profiles/roomify/modules/roomify/roomify_listing/roomify_listing.module
+index 8794c94..cc70906 100644
+--- a/profiles/roomify/modules/roomify/roomify_listing/roomify_listing.module
++++ b/profiles/roomify/modules/roomify/roomify_listing/roomify_listing.module
+@@ -1652,9 +1652,11 @@ function roomify_listing_enquiry_form_submit($form, &$form_state) {
+   $rules_state->variables['roomify_conversation'] = $conversation_wrapper;
+ 
+   $to_account = user_load($type->uid);
++  // Email author.
++  pet_action_send_pet('new_booking_enquiry', NULL, $to_account, NULL, NULL, array(), $rules_state);
+ 
+   if ($existing_account) {
+-    $user_wrapper = entity_metadata_wrapper('user', $to_account);
++    $user_wrapper = entity_metadata_wrapper('user', $account);
+     $rules_state->currentArguments['user'] = $user_wrapper;
+     $rules_state->variables['user'] = $user_wrapper;
+     pet_action_send_pet('authenticated_user_booking_enquiry', NULL, $account, NULL, NULL, array(), $rules_state);
+@@ -1663,8 +1665,6 @@ function roomify_listing_enquiry_form_submit($form, &$form_state) {
+     // Email user with login instruction.
+     drupal_mail('roomify_conversations', 'register_no_approval_required', $email_address, NULL, array('account' => $account, 'roomify_conversation' => $conversation), variable_get('site_mail', ini_get('sendmail_from')));
+   }
+-  // Email owner.
+-  pet_action_send_pet('new_booking_enquiry', NULL, $to_account, NULL, NULL, array(), $rules_state);
+ 
+   $commands = array();
+   $commands[] = ctools_modal_command_dismiss();
+-- 
+2.7.0.windows.1
+

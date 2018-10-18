@@ -1,0 +1,158 @@
+; Packaging information for agency
+name = "Roomify"
+description = "For vacation rentals, hotels and multi-property agencies"
+;exclusive = "1"
+core = "7.x"
+
+; ----------
+; Dependencies
+; ----------
+
+; Core Drupal Modules
+dependencies[] = block
+dependencies[] = comment
+dependencies[] = contextual
+dependencies[] = color
+dependencies[] = dblog
+dependencies[] = field
+dependencies[] = field_sql_storage
+dependencies[] = field_ui
+dependencies[] = rdf
+dependencies[] = file
+dependencies[] = filter
+dependencies[] = image
+dependencies[] = list
+dependencies[] = menu
+dependencies[] = node
+dependencies[] = number
+dependencies[] = options
+dependencies[] = path
+dependencies[] = system
+dependencies[] = taxonomy
+dependencies[] = text
+dependencies[] = user
+
+; ----------------
+; Key Dependencies
+; ----------------
+
+; Entity
+dependencies[] = entity
+dependencies[] = entity_translation
+dependencies[] = entityqueue
+dependencies[] = xautoload
+
+; CTools and Panels
+dependencies[] = ctools
+dependencies[] = page_manager
+dependencies[] = panels
+dependencies[] = panels_mini
+dependencies[] = i18n_panels
+
+; Views
+dependencies[] = views_content
+dependencies[] = views
+dependencies[] = views_data_export
+
+; Rules
+dependencies[] = rules
+dependencies[] = rules_conditional
+
+; Variable
+dependencies[] = variable
+
+; Date/Time
+dependencies[] = date
+dependencies[] = date_api
+dependencies[] = date_popup
+dependencies[] = date_views
+
+; User interface
+dependencies[] = jquery_update
+
+; Fields
+dependencies[] = addressfield
+dependencies[] = entityreference
+dependencies[] = geofield
+dependencies[] = entityreference_prepopulate
+
+; Core Rooms
+dependencies[] = bat
+dependencies[] = bat_booking
+dependencies[] = bat_event_state_constraints
+
+; Commerce (contrib)
+dependencies[] = commerce_addressbook
+dependencies[] = commerce_cart_expiration
+
+; Utilities
+dependencies[] = backup_migrate
+
+; Composer
+dependencies[] = composer_manager
+
+; Roomify
+dependencies[] = roomify_system
+dependencies[] = roomify_property
+dependencies[] = roomify_rate
+dependencies[] = roomify_sidebar
+dependencies[] = roomify_rights
+dependencies[] = roomify_conversations
+dependencies[] = roomify_dashboard
+dependencies[] = roomify_offers
+dependencies[] = roomify_page
+dependencies[] = roomify_search
+dependencies[] = roomify_social_profiles
+dependencies[] = roomify_terms_conditions
+dependencies[] = roomify_translate
+dependencies[] = roomify_contact
+dependencies[] = roomify_travel_theme
+dependencies[] = roomify_pages_manager
+dependencies[] = roomify_social_feeds
+dependencies[] = roomify_integrations
+dependencies[] = roomify_review
+dependencies[] = roomify_properties_list
+
+; Other
+dependencies[] = addtoany
+dependencies[] = adminimal_admin_menu
+dependencies[] = better_formats
+dependencies[] = better_messages
+dependencies[] = content_menu
+dependencies[] = colorbox
+dependencies[] = media_colorbox
+dependencies[] = entity_token
+dependencies[] = imageapi_optimize
+dependencies[] = inline_entity_form
+dependencies[] = link
+dependencies[] = pet
+dependencies[] = entityform
+dependencies[] = entityform_block
+dependencies[] = entityform_notifications
+dependencies[] = references_dialog
+dependencies[] = role_delegation
+dependencies[] = redirect
+dependencies[] = taxonomy_access_fix
+dependencies[] = userone
+dependencies[] = entity_edit_protection
+dependencies[] = google_recaptcha
+dependencies[] = hreflang
+dependencies[] = select2
+dependencies[] = yoast_seo
+dependencies[] = video
+dependencies[] = popup_message
+
+; Users
+dependencies[] = profile2
+dependencies[] = profile2_page
+dependencies[] = administerusersbyrole
+dependencies[] = chain_menu_access
+dependencies[] = subuser
+dependencies[] = subuser_ui
+
+; XML sitemap
+dependencies[] = xmlsitemap
+dependencies[] = xmlsitemap_custom
+dependencies[] = xmlsitemap_entity
+dependencies[] = xmlsitemap_node
+dependencies[] = xmlsitemap_taxonomy

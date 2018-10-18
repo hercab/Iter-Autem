@@ -1,0 +1,12 @@
+name = Commerce Custom Offline Payments
+description = Manage custom offline payment methods.
+package = Commerce (contrib)
+dependencies[] = commerce
+dependencies[] = commerce_payment
+core = 7.x
+configure = admin/commerce/config/custom-offline-payments
+
+; Information added by drush on 2016-07-13
+version = "6b8a9ae5c395f6e0d7cc2bcb5616835a2d5a2898"
+project = "commerce_cop"
+datestamp = "1468436390"

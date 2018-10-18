@@ -1,0 +1,34 @@
+<?php
+/**
+ * @file
+ * Code for the ia_roomify_dasboard feature.
+ */
+
+include_once 'ia_roomify_dashboard.features.inc';
+
+/**
+ * Implements hook_page_alter().
+ */
+function ia_roomify_dashboard_page_alter(&$page) {
+
+    global $base_url;
+    global $user;
+
+    $invalid_role = array_intersect($user->roles, array(
+        'administrator',
+        'roomify manager',
+        'property owner',
+        'content editor',
+    ));
+
+    if (empty($invalid_role)) {
+
+        drupal_add_css(drupal_get_path('module', 'roomify_dashboard') . '/css/roomify_dashboard_help.css');
+        drupal_add_css(drupal_get_path('module', 'ia_roomify_dashboard') . '/css/ia_dashboard_help.css');
+
+        $link = $base_url . '/contact-us';
+
+        $info_icon = '<img src="' . file_create_url(drupal_get_path('module', 'roomify_dashboard') . '/images/info.png') . '">';
+        $page['content']['help']['content']['#markup'] = '<a href="' . $link . '"><div class="help-icon ia-help-icon"><span >' . t('Contact Us') . '</span>' . $info_icon . '</div></a>';
+    }
+}

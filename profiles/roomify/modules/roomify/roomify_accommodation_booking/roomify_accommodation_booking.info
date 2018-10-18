@@ -1,0 +1,21 @@
+name = Roomify Accommodation Booking
+description = Custom Booking modules for the Roomify Accommodation product.
+core = 7.x
+
+package = Roomify
+
+dependencies[] = roomify_accommodation_options
+dependencies[] = roomify_casa
+dependencies[] = roomify_locanda
+dependencies[] = bat_booking
+dependencies[] = bat_facets
+dependencies[] = cer
+dependencies[] = commerce_cart
+dependencies[] = commerce_customer_ui
+dependencies[] = commerce_order_ui
+dependencies[] = rules
+dependencies[] = job_scheduler
+
+files[] = views/roomify_accommodation_booking.views.inc
+files[] = views/roomify_accommodation_booking_book_this_field.inc
+files[] = views/roomify_accommodation_booking_handler_booking_guest_name.inc

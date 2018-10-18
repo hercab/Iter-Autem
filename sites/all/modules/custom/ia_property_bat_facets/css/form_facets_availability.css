@@ -1,0 +1,40 @@
+
+
+
+@media (min-width: 992px) {
+
+    #property-bat-facets-availability .form-wrapper .form-item-rooms {
+        margin-bottom: 15px;
+        position: relative;
+        min-height: 1px;
+        padding-right: 15px;
+
+    }
+    .page-availability-search #property-bat-facets-availability .form-wrapper .form-item-rooms{
+        padding-left: 15px;
+    }
+
+    #property-bat-facets-availability .form-wrapper .form-item-rooms {
+        float: left;
+        width: 10%;
+    }
+    .page-availability-search #property-bat-facets-availability .form-wrapper .form-item-rooms {
+        width: 100%;
+    }
+    .page-availability-search #property-bat-facets-availability .form-wrapper .form-item-rooms label{
+        display: none;
+    }
+    .page-availability-search #property-bat-facets-availability .form-wrapper.form-group > .search-availability-submit {
+        padding-left: 15px;
+        padding-right: 15px;
+    }
+
+}
+
+@media (min-width: 768px) {
+
+    .pane-roomify-listing-availability-search-block-roomify-property-search #property-bat-facets-availability .form-wrapper .search-availability-submit,
+    #property-bat-facets-availability .form-wrapper .search-submit {
+
+        width: 10% }
+}

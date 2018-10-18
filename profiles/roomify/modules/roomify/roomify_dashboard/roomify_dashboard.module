@@ -1,0 +1,561 @@
+<?php
+
+/**
+ * @file
+ * Code for the Roomify Dashboard feature.
+ */
+
+include_once 'roomify_dashboard.features.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function roomify_dashboard_menu() {
+  $items = array();
+
+  $items['admin/bat/config/global/theme-colors'] = array(
+    'title' => 'Theme Colors',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('roomify_dashboard_theme_colors_form'),
+    'access arguments' => array('administer theme colors'),
+  );
+
+  return $items;
+}
+
+/**
+ *
+ */
+function roomify_dashboard_theme_colors_form($form, &$form_state) {
+  $theme = variable_get('theme_default', NULL);
+
+  module_load_include('module', 'color', 'color.module');
+  $form['color'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Color scheme'),
+    '#weight' => -1,
+    '#attributes' => array('id' => 'color_scheme_form'),
+    '#theme' => 'color_scheme_form',
+  );
+
+  $form['color'] += color_scheme_form($form, $form_state, $theme);
+
+  $form['#attached']['js'] = array(
+    drupal_get_path('module', 'roomify_dashboard') . '/js/roomify_dashboard_theme_colors.js',
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save Colors'),
+  );
+
+  $form['#validate'][] = 'color_scheme_form_validate';
+  $form['#submit'][] = 'color_scheme_form_submit';
+
+  return $form;
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function roomify_dashboard_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && !empty($plugin_type)) {
+    return "plugins/{$plugin_type}";
+  }
+}
+
+/**
+ * Implements hook_admin_paths().
+ */
+function roomify_dashboard_admin_paths() {
+  $paths = array(
+    'user' => TRUE,
+    'user/*' => TRUE,
+    'user/*/stays' => TRUE,
+    'user/*/conversations' => TRUE,
+    'profile-property_owner/*' => TRUE,
+    'profile-guest/*' => TRUE,
+  );
+
+  return $paths;
+}
+
+/**
+ * Implements hook_roomify_rights().
+ */
+function roomify_dashboard_roomify_rights() {
+  $rights['roomify_dashboard'] = array(
+    'authenticated user' => array(
+      'view the administration theme',
+    ),
+  );
+
+  return $rights;
+}
+
+/**
+ * Implements hook_views_pre_render().
+ *
+ * Add ctools modal JS when displaying properties view.
+ */
+function roomify_dashboard_views_pre_render(&$view) {
+  // Add necessary css/js for modals.
+  $modal_views = array(
+    'properties',
+    'property_types',
+    'user_conversations',
+  );
+  if (in_array($view->name, $modal_views)) {
+    roomify_dashboard_setup_modal();
+  }
+
+  // Hide the Type name in Conversations views if this is a Casa Property.
+  if ($view->name == 'user_conversations') {
+    $results = &$view->result;
+    foreach ($results as $key => $result) {
+      $type = $result->bat_types_field_data_conversation_unit_type_ref_type;
+      if ($type == 'home') {
+        unset($result->bat_types_field_data_conversation_unit_type_ref_name);
+      }
+    }
+  }
+
+  // Hide the Type name in Bookings views if this is a Casa Property.
+  if ($view->name == 'dashboard_bookings') {
+    $results = &$view->result;
+    foreach ($results as $key => $result) {
+      $type = $result->bat_types_bat_units_type;
+      if ($type == 'home') {
+        unset($result->bat_types_bat_units_name);
+      }
+    }
+
+    if ($view->current_display == 'views_data_export_1') {
+      foreach ($results as $key => $result) {
+        if ($result->bat_bookings_type == 'roomify_accommodation_booking') {
+          $result->bat_bookings_type = 'Standard';
+        }
+        elseif ($result->bat_bookings_type == 'ical') {
+          $result->bat_bookings_type = $result->field_ical_type;
+        }
+      }
+    }
+  }
+
+  if ($view->name == 'properties') {
+    if (!empty($view->header)) {
+      $view->header['area']->options['content'] = l(t('+ add property'), 'admin/bat/config/property/wizard/nojs', array('attributes' => array('class' => 'button add-property-button ctools-use-modal ctools-modal-roomify-dashboard-modal-style')));
+    }
+    if (!empty($view->footer)) {
+      $view->footer['area']->options['content'] = l(t('+ add property'), 'admin/bat/config/property/wizard/nojs', array('attributes' => array('class' => 'button add-property-button ctools-use-modal ctools-modal-roomify-dashboard-modal-style')));
+    }
+    if (empty($view->result) && isset($view->exposed_widgets)) {
+      $view->exposed_widgets = FALSE;
+    }
+  }
+}
+
+/**
+ * Helper function - setup for dashboard modals.
+ */
+function roomify_dashboard_setup_modal() {
+  ctools_include('modal');
+  ctools_modal_add_js();
+
+  drupal_add_js(drupal_get_path('module', 'roomify_dashboard') . '/js/roomify_dashboard_modal.js');
+  drupal_add_css(drupal_get_path('module', 'roomify_dashboard') . '/css/roomify_dashboard_modal.css');
+  drupal_add_js(array('roomify-dashboard-modal-style' => roomify_dashboard_modal_style()), 'setting');
+}
+
+/**
+ * Return array with dashboard modal style.
+ */
+function roomify_dashboard_modal_style() {
+  return array(
+    'modalSize' => array(
+      'type' => 'fixed',
+      'width' => 0,
+      'height' => 0,
+    ),
+    'closeImage' => theme('image', array(
+      'path' => drupal_get_path('module', 'roomify_dashboard') . ('/images/close.png'),
+      'height' => '25px',
+      'title' => t('Close window'),
+      'alt' => t('Close window'),
+    )),
+    'closeText' => '',
+  );
+}
+
+/**
+ * Implements hook_views_default_views_alter().
+ */
+function roomify_dashboard_views_default_views_alter(&$views) {
+  // Show all line items (including add-ons without associated products) in the
+  // commerce view order view.
+  if (isset($views['commerce_line_item_table'])) {
+    unset($views['commerce_line_item_table']->display['default']->display_options['filters']['product_line_item_type']);
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * FORM_ID = entityform_delete_form.
+ */
+function roomify_dashboard_form_entityform_delete_form_alter(&$form, &$form_state) {
+  $form['#submit'][] = 'redirect_to_contact_submissions';
+  $form['actions']['cancel']['#href'] = 'form-submissions';
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * FORM_ID = contact_entityform_edit_form.
+ */
+function roomify_dashboard_form_contact_entityform_edit_form_alter(&$form, &$form_state) {
+  $form['actions']['save']['#submit'][] = 'redirect_to_contact_submissions';
+}
+
+/**
+ * Custom submit function to redirect users.
+ */
+function redirect_to_contact_submissions(&$form, &$form_state) {
+  $form_state['redirect'] = 'form-submissions';
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function roomify_dashboard_form_alter(&$form, &$form_state, $form_id) {
+  global $user;
+
+  if ($form['#id'] == 'views-exposed-form-dashboard-bookings-page-1') {
+    $form['#attached']['css'][] = array(
+      'data' => '.views-widget-filter-booking_start_date_value label, .views-widget-filter-booking_end_date_value label { padding-bottom: 5px !important; } .views-exposed-form .views-exposed-widget .form-submit { margin-top: 2.3em !important; }',
+      'type' => 'inline',
+    );
+  }
+  // Disable the link path to non admin.
+  if (is_array($user->roles) && !in_array('administrator', $user->roles)) {
+    if ($form_id == 'menu_edit_item') {
+      $form['menu_token_enabled']['#access'] = FALSE;
+      $form['menu_token_options']['#access'] = FALSE;
+      $form['menu_token_replacement_patterns']['#access'] = FALSE;
+      if (isset($form['mlid']['#value'])) {
+        $menu = menu_link_load($form['mlid']['#value']);
+        if ($menu['menu_name'] == 'roomify_dashboard_menu') {
+          $form['link_path']['#disabled'] = TRUE;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ * FORM_ID = pet_form.
+ */
+function roomify_dashboard_form_pet_form_alter(&$form, &$form_state) {
+  $form['actions']['cancel']['#href'] = '/admin/bat/config/email-templates';
+
+  $form['#submit'][] = 'redirect_to_email_templates_view';
+}
+
+/**
+ * Custom submit function to redirect users.
+ */
+function redirect_to_email_templates_view(&$form, &$form_state) {
+  $form_state['redirect'] = 'admin/bat/config/email-templates';
+}
+
+/**
+ * Implements hook_user_login().
+ */
+function roomify_dashboard_user_login(&$edit, $account) {
+  // Check if we are coming from /user/reset and don't set the destination if so.
+  if (arg(1) == "reset") {
+    // Do nothing.
+  }
+  else {
+    // Redirect user to dashboard.
+    $_GET['destination'] = 'user';
+  }
+}
+
+/**
+ * Implements hook_page_alter().
+ */
+function roomify_dashboard_page_alter(&$page) {
+  global $user;
+
+  if (isset($page['#theme']) && $page['#theme'] == 'references_dialog_page') {
+    return;
+  }
+
+  if (!variable_get('roomify_testing_environment', FALSE)) {
+    // Add 'Documentation' link.
+    $valid_role = array_intersect($user->roles, array(
+      'administrator',
+      'roomify manager',
+      'property owner',
+      'content editor',
+    ));
+
+    if (!empty($valid_role) || $user->uid == 1) {
+      drupal_add_css(drupal_get_path('module', 'roomify_dashboard') . '/css/roomify_dashboard_help.css');
+
+      $link = 'http://docs.roomify.us/roomify_accommodations/index.html';
+
+      $help_file = file_get_contents(drupal_get_path('module', 'roomify_dashboard') . '/roomify_dashboard_help.json');
+
+      foreach (json_decode($help_file, TRUE) as $row) {
+        if (drupal_match_path(current_path(), $row['url'])) {
+          $link = $row['doc'];
+        }
+      }
+
+      $info_icon = '<img src="' . file_create_url(drupal_get_path('module', 'roomify_dashboard') . '/images/info.png') . '">';
+      $page['content']['help']['content']['#markup'] = '<a target="_blank" href="' . $link . '"><div class="help-icon"><span>' . t('Documentation') . '</span>' . $info_icon . '</div></a>';
+    }
+  }
+}
+
+/**
+ * Implements hook_views_data_alter().
+ */
+function roomify_dashboard_views_data_alter(&$data) {
+
+  $data['bat_bookings']['booking_price'] = array(
+    'field' => array(
+      'title' => t('Booking Price'),
+      'help' => t('Display the right booking price.'),
+      'handler' => 'roomify_dashboard_handler_bat_booking_price',
+    ),
+  );
+  $data['commerce_order']['property_image'] = array(
+    'field' => array(
+      'title' => t('Roomify Property Image'),
+      'help' => t('Display the property image.'),
+      'handler' => 'roomify_dashboard_handler_commerce_order_property_image',
+    ),
+  );
+  $data['pets']['localize_edit_link'] = array(
+    'field' => array(
+      'title' => t('Localized Edit link'),
+      'help' => t('An edit link with the selected language.'),
+      'handler' => 'roomify_dashboard_handler_localized_edit_link',
+    ),
+  );
+
+  $data['pets']['language_select'] = array(
+    'title' => t('Language select list'),
+    'group' => t('Previewable Email Template'),
+    'help' => t('Filter by language, choosing from dropdown list.'),
+    'filter' => array('handler' => 'roomify_dashboard_filters_handler_filter_language_select'),
+    'real field' => 'language',
+  );
+
+  $data['roomify_properties']['property_types_edit_link'] = array(
+    'field' => array(
+      'title' => t('Types Link'),
+      'help' => t('Add a link to manage types.'),
+      'handler' => 'roomify_dashboard_handler_properties_types_edit_link',
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu_link_alter().
+ */
+function roomify_dashboard_menu_link_alter(&$item) {
+  // Translating a menu link of the dashboard menu.
+  if (isset($item['menu_name']) && $item['menu_name'] == 'roomify_dashboard_menu') {
+    if ($item['link_path'] != 'node/add') {
+      $item['options']['query']['destination'] = 'user';
+    }
+    $item['menu_token_enabled'] = 1;
+    if (isset($item['language']) && $item['language'] != 'en' && $item['language'] != LANGUAGE_NONE) {
+      // Check if the original link has a class.
+      if ((isset($item['translation_set'])) && ($translations = $item['translation_set']->get_translations())) {
+        $class = isset($translations['en']['options']['attributes']['class']) ? $translations['en']['options']['attributes']['class'] : '';
+        $item['options']['attributes']['class'] = $class;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_module_implements_alter().
+ */
+function roomify_dashboard_module_implements_alter(&$implementations, $hook) {
+  if ($hook == 'menu_link_alter' && isset($implementations['roomify_dashboard'])) {
+    $group = $implementations['roomify_dashboard'];
+    unset($implementations['roomify_dashboard']);
+    $implementations['roomify_dashboard'] = $group;
+  }
+  if ($hook == 'form_alter' && isset($implementations['roomify_dashboard'])) {
+    $group = $implementations['roomify_dashboard'];
+    unset($implementations['roomify_dashboard']);
+    $implementations['roomify_dashboard'] = $group;
+  }
+}
+
+/**
+ * Implements hook_preprocess_html().
+ */
+function roomify_dashboard_preprocess_html(&$vars) {
+  if (module_exists('better_messages')) {
+    $better_messages = better_messages_process_visibility();
+    $access = user_access('access better messages');
+    if ($better_messages && $access) {
+      $vars['classes_array'][] = 'better-messages-popup';
+    }
+  }
+}
+
+/**
+ * Create the dashboard Menu.
+ */
+function roomify_dashboard_create_dashboard_menu() {
+  $menu = array(
+    'menu_name' => 'roomify_dashboard_menu',
+    'title' => 'Roomify Dashboard Menu',
+    'description' => 'A menu used to manage the roomify dashboard',
+    'language' => 'en',
+    'i18n_mode' => I18N_MODE_MULTIPLE,
+  );
+  menu_save($menu);
+
+  // Create Menu Links.
+  roomify_system_create_update_menu_link('Dashboard', 'user', 'roomify_dashboard_menu', -20, 1, 0, array('attributes' => array('class' => 'dashboard')));
+  roomify_system_create_update_menu_link('Properties', 'admin/bat/properties/view-all', 'roomify_dashboard_menu', -10, 1, 0, array('attributes' => array('class' => 'properties')));
+  roomify_system_create_update_menu_link('Bookings', 'admin/bat/bookings', 'roomify_dashboard_menu', -9, 1, 0, array('attributes' => array('class' => 'bookings')));
+  roomify_system_create_update_menu_link('Conversations', 'admin/bat/conversations/guest', 'roomify_dashboard_menu', -8, 1, 0, array('attributes' => array('class' => 'conversations')));
+  roomify_system_create_update_menu_link('Content', 'admin/content', 'roomify_dashboard_menu', -6, 1, 0, array('attributes' => array('class' => 'content')));
+  roomify_system_create_update_menu_link('Accounts', 'user', 'roomify_dashboard_menu', -5, 1, 0, array('attributes' => array('class' => 'accounts')));
+  roomify_system_create_update_menu_link('Configuration', 'admin/bat/config/global/settings', 'roomify_dashboard_menu', -4, 1, 0, array('attributes' => array('class' => 'settings')));
+
+  // Booking Sub-menu.
+  $bookings_mlid = roomify_system_get_menu_link_id('Bookings', 'admin/bat/bookings', 'roomify_dashboard_menu');
+  roomify_system_create_update_menu_link('Global Calendar', 'admin/bat/config/availability-calendar', 'roomify_dashboard_menu', 0, 1, $bookings_mlid);
+  roomify_system_create_update_menu_link('Global Booking Settings', 'admin/bat/config/booking/settings', 'roomify_dashboard_menu', 1, 1, $bookings_mlid);
+  roomify_system_create_update_menu_link('Booking Notifications', 'admin/bat/config/booking/notifications', 'roomify_dashboard_menu', 2, 1, $bookings_mlid);
+  roomify_system_create_update_menu_link('Commerce Settings', 'admin/bat/config/commerce/settings', 'roomify_dashboard_menu', 3, 2, $bookings_mlid);
+  roomify_system_create_update_menu_link('Payment Methods', 'admin/roomify/payment_methods', 'roomify_dashboard_menu', 1, 2, $bookings_mlid);
+  roomify_system_create_update_menu_link('Terms & Conditions', 'admin/config/content/terms-and-conditions', 'roomify_dashboard_menu', 4, 2, $bookings_mlid);
+  roomify_system_create_update_menu_link('Offers', 'admin/bat/config/global/offers', 'roomify_dashboard_menu', 5, 2, $bookings_mlid);
+
+  // Conversations Sub-menu.
+  $conversations_mlid = roomify_system_get_menu_link_id('Conversations', 'admin/bat/conversations/guest', 'roomify_dashboard_menu');
+  roomify_system_create_update_menu_link('Conversations as Owner', 'admin/bat/conversations/owner', 'roomify_dashboard_menu', 1, 1, $conversations_mlid);
+  roomify_system_create_update_menu_link('Conversations as Guest', 'admin/bat/conversations/guest', 'roomify_dashboard_menu', 1, 2, $conversations_mlid);
+
+  // Content Sub-Menu.
+  $content_mlid = roomify_system_get_menu_link_id('Content', 'admin/content', 'roomify_dashboard_menu');
+  roomify_system_create_update_menu_link('Site Pages', 'admin/content', 'roomify_dashboard_menu', 0, 1, $content_mlid);
+  roomify_system_create_update_menu_link('Add new content', 'node/add', 'roomify_dashboard_menu', 2, 1, $content_mlid);
+
+  $featured_properties_subqueue_id = db_select('entityqueue_subqueue', 'e')
+    ->fields('e', array('subqueue_id'))
+    ->condition('queue', 'featured_properties')
+    ->execute()
+    ->fetchField();
+  if ($featured_properties_subqueue_id === FALSE) {
+    $featured_properties_subqueue_id = 1;
+  }
+
+  roomify_system_create_update_menu_link('Featured Properties', 'admin/structure/entityqueue/list/featured_properties/subqueues/' . $featured_properties_subqueue_id . '/edit', 'roomify_dashboard_menu', 3, 1, $content_mlid);
+
+  $featured_areas_subqueue_id = db_select('entityqueue_subqueue', 'e')
+    ->fields('e', array('subqueue_id'))
+    ->condition('queue', 'featured_areas')
+    ->execute()
+    ->fetchField();
+  if ($featured_areas_subqueue_id === FALSE) {
+    $featured_areas_subqueue_id = 2;
+  }
+
+  roomify_system_create_update_menu_link('Featured Areas', 'admin/structure/entityqueue/list/featured_areas/subqueues/' . $featured_areas_subqueue_id . '/edit', 'roomify_dashboard_menu', 4, 1, $content_mlid);
+
+  roomify_system_create_update_menu_link('Main Menu', 'admin/structure/menu/manage/main-menu', 'roomify_dashboard_menu', 5, 1, $content_mlid);
+  roomify_system_create_update_menu_link('Dashboard Menu', 'admin/structure/menu/manage/roomify_dashboard_menu', 'roomify_dashboard_menu', 6, 1, $content_mlid);
+  roomify_system_create_update_menu_link('Email Templates', 'admin/bat/config/email-templates', 'roomify_dashboard_menu', 7, 1, $content_mlid);
+  roomify_system_create_update_menu_link('Taxonomy', 'admin/structure/taxonomy', 'roomify_dashboard_menu', 8, 1, $content_mlid);
+  roomify_system_create_update_menu_link('Footer', 'admin/config/content/roomify-footer', 'roomify_dashboard_menu', 10, 1, $content_mlid);
+
+  // Configuration Sub-menu.
+  $configuration_mlid = roomify_system_get_menu_link_id('Configuration', 'admin/bat/config/global/settings', 'roomify_dashboard_menu');
+  roomify_system_create_update_menu_link('Quick Setup', 'admin/bat/config/example-content', 'roomify_dashboard_menu', 0, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Configure Social Sharing Platforms', 'admin/config/content/rsp', 'roomify_dashboard_menu', 1, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Configure Social Feeds', 'admin/config/content/rsf', 'roomify_dashboard_menu', 2, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Configure Socials Sharing on pages', 'admin/bat/config/addtoany/settings', 'roomify_dashboard_menu', 2, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Global Settings', 'admin/bat/config/global/settings', 'roomify_dashboard_menu', 3, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Configure Channel Management', 'admin/config/services/channel-management', 'roomify_dashboard_menu', 4, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Global Customer message', 'admin/config/content/rcs', 'roomify_dashboard_menu', 5, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Availability Search form', 'admin/bat/config/availability-search/settings', 'roomify_dashboard_menu', 6, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Integrations', 'admin/config/roomify-integrations', 'roomify_dashboard_menu', 7, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Enquiry Form settings', 'admin/bat/config/enquiry/settings', 'roomify_dashboard_menu', 8, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Redirects', 'admin/config/search/redirect', 'roomify_dashboard_menu', 9, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Translations', 'admin/config/regional/translate', 'roomify_dashboard_menu', 10, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Theme Colors', 'admin/bat/config/global/theme-colors', 'roomify_dashboard_menu', 11, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Google reCAPTCHA', 'admin/config/spam_protection/google_recaptcha/keys', 'roomify_dashboard_menu', 12, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('XML Sitemap', 'admin/config/search/xmlsitemap', 'roomify_dashboard_menu', 13, 1, $configuration_mlid);
+  roomify_system_create_update_menu_link('Popup Message', 'admin/config/user-interface/popup_message', 'roomify_dashboard_menu', 14, 1, $configuration_mlid);
+
+  // Accounts Sub-menu.
+  $accounts_mlid = roomify_system_get_menu_link_id('Accounts', 'user', 'roomify_dashboard_menu');
+  roomify_system_create_update_menu_link_with_token('My Account', 'user/[current-user:uid]/edit', 'roomify_dashboard_menu', 1, 1, $accounts_mlid, array());
+  roomify_system_create_update_menu_link_with_token('Property Owner Profile', 'profile-property_owner/[current-user:uid]/edit', 'roomify_dashboard_menu', 2, 1, $accounts_mlid, array());
+  roomify_system_create_update_menu_link_with_token('Guest Profile', 'profile-guest/[current-user:uid]/edit', 'roomify_dashboard_menu', 3, 1, $accounts_mlid, array());
+  roomify_system_create_update_menu_link('Users', 'admin/people', 'roomify_dashboard_menu', 10, 1, $accounts_mlid);
+  roomify_system_create_update_menu_link('Users Profiles', 'admin/people/profiles', 'roomify_dashboard_menu', 9, 1, $accounts_mlid);
+  roomify_system_create_update_menu_link_with_token('My Users', 'user/[current-user:uid]/subuser', 'roomify_dashboard_menu', 11, 1, $accounts_mlid, array());
+  // Create link to enquiries.
+  roomify_system_create_update_menu_link('Site Wide contact enquiries', 'admin/structure/entityform_types/manage/contact/submissions/autofields_table', 'roomify_dashboard_menu', 5, 1, $conversations_mlid);
+}
+
+/**
+ * Implements hook_field_widget_form_alter().
+ */
+function roomify_dashboard_field_widget_form_alter(&$element, &$form_state, $context) {
+  if ($context['field']['type'] == 'image') {
+    // Loop through the element children (there will always be at least one).
+    foreach (element_children($element) as $key => $child) {
+      // Add the new process function to the element.
+      $element[$key]['#process'][] = 'roomify_dashboard_image_field_widget_process';
+    }
+  }
+}
+
+/**
+ * Custom process function.
+ */
+function roomify_dashboard_image_field_widget_process($element, &$form_state, $form) {
+  // Change the weight of title and alt.
+  $element['title']['#weight'] = 1;
+  $element['alt']['#weight'] = 2;
+
+  return $element;
+}
+
+/**
+ * Implements hook_views_query_alter().
+ */
+function roomify_dashboard_views_query_alter(&$view, &$query) {
+  if ($view->name == 'availability_calendar') {
+    if (!user_access('update any roomify_property entity')) {
+      global $user;
+
+      $view->query->where[] = array(
+        'args' => array(),
+        'type' => 'AND',
+        'conditions' => array(
+          array(
+            'field' => 'roomify_properties.uid',
+            'value' => $user->uid,
+            'operator' => '=',
+          ),
+        ),
+      );
+    }
+  }
+}

@@ -1,0 +1,58 @@
+[
+    {
+        "name": "roomify/bat",
+        "version": "dev-master",
+        "version_normalized": "9999999-dev",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/Roomify/bat.git",
+            "reference": "e8522d07c3f8b38c57216edcde126147839860f5"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/Roomify/bat/zipball/e8522d07c3f8b38c57216edcde126147839860f5",
+            "reference": "e8522d07c3f8b38c57216edcde126147839860f5",
+            "shasum": ""
+        },
+        "require": {
+            "php": ">=5.4.0"
+        },
+        "require-dev": {
+            "phpunit/dbunit": ">=1.2",
+            "phpunit/phpunit": "4.*",
+            "scrutinizer/ocular": "~1.1",
+            "squizlabs/php_codesniffer": "~2.3"
+        },
+        "time": "2017-10-22 17:07:25",
+        "type": "library",
+        "installation-source": "source",
+        "autoload": {
+            "psr-4": {
+                "Roomify\\Bat\\": "src"
+            }
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Roomify",
+                "email": "hello@roomify.us",
+                "homepage": "https://roomify.us",
+                "role": "Developing Organization"
+            }
+        ],
+        "description": "A booking and availability management library",
+        "homepage": "https://github.com/roomify/bat",
+        "keywords": [
+            "availability management",
+            "bat",
+            "booking",
+            "booking engine",
+            "reservations",
+            "roomify",
+            "sharing economy"
+        ]
+    }
+]

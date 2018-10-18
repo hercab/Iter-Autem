@@ -1,0 +1,15 @@
+name = Pay in person payment
+description = Pay in person offline payment
+package = Commerce (offline payments)
+dependencies[] = commerce_cop
+dependencies[] = features
+core = 7.x
+
+; Features integration
+features[commerce_custom_offline_payment][] = in_person
+features[features_api][] = api:2
+
+; Information added by drush on 2016-07-13
+version = "6b8a9ae5c395f6e0d7cc2bcb5616835a2d5a2898"
+project = "commerce_cop"
+datestamp = "1468436390"

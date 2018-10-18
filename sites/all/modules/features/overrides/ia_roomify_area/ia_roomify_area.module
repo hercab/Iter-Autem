@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the ia_roomify_area feature.
+ */
+
+include_once 'ia_roomify_area.features.inc';

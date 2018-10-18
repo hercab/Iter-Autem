@@ -1,0 +1,16 @@
+name = Views Autocomplete Filters
+description = Views Autocomplete Filters
+package = Views
+core = 7.x
+dependencies[] = views
+files[] = views_autocomplete_filters.module
+files[] = views/views_autocomplete_filters.views.inc
+files[] = views/handlers/views_autocomplete_filters_handler_filter_string.inc
+files[] = views/handlers/views_autocomplete_filters_handler_filter_combine.inc
+files[] = views/handlers/views_autocomplete_filters_handler_filter_search_api_text.inc
+files[] = views/handlers/views_autocomplete_filters_handler_filter_search_api_fulltext.inc
+
+; Information added by drush on 2016-11-06
+version = "39443b0b95dbc50151ec0684ff91143a3fcbe6d2"
+project = "views_autocomplete_filters"
+datestamp = "1478433853"

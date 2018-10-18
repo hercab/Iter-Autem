@@ -1,0 +1,318 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Roomify Property module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function roomify_property_install() {
+  // Add Pathauto module support.
+  variable_set('pathauto_roomify_property_pattern', 'listing/[roomify_property:name]');
+}
+
+/**
+ * Implements hook_schema().
+ */
+function roomify_property_schema() {
+  $schema = array();
+
+  $schema['roomify_properties'] = array(
+    'description' => 'The base table for Properties.',
+    'fields' => array(
+      'property_id' => array(
+        'description' => 'Primary Key: Identifier for a Property.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'revision_id' => array(
+        'description' => 'The current {roomify_properties_revision}.revision_id version identifier.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'type' => array(
+        'description' => 'The {property_type}.type of this Property.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'language' => array(
+        'description' => 'The language of the Property.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'name' => array(
+        'description' => 'The name of the Property - a human-readable identifier.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the Property was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the Property was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => 'Boolean indicating whether the property is published (visible to non-administrators).',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 1,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid that created this property.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+      'priority' => array(
+        'description' => 'The priority of this property for sorting in the views.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('property_id'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  $schema['roomify_properties_revision'] = array(
+    'description' => 'The base table for Properties.',
+    'fields' => array(
+      'property_id' => array(
+        'description' => 'Unique Property id (entity id).',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'revision_id' => array(
+        'description' => 'The current {roomify_properties_revision}.revision_id version identifier.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'The name of this property for this revision',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'revision_uid' => array(
+        'description' => 'The {users}.uid that created this Property at this revision.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'log' => array(
+        'description' => 'The log entry explaining the changes in this version.',
+        'type' => 'text',
+        'not null' => TRUE,
+        'size' => 'big',
+      ),
+      'revision_timestamp' => array(
+        'description' => 'The Unix timestamp when the Property was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('revision_id'),
+  );
+
+  $schema['roomify_property_types'] = array(
+    'description' => 'The base table for Property Types.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Identifier for a property type.',
+      ),
+      'type' => array(
+        'description' => 'The {property_type}.type of this property type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this property type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0x01,
+        'size' => 'tiny',
+        'description' => 'The exportable status of the entity.',
+      ),
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Add field status.
+ */
+function roomify_property_update_7001() {
+  $field = array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 0x01,
+    'size' => 'tiny',
+    'description' => 'The exportable status of the entity.',
+  );
+
+  db_add_field('roomify_properties', 'status', $field);
+}
+
+/**
+ * Add field priority.
+ */
+function roomify_property_update_7002() {
+  $field = array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 0x00,
+    'size' => 'tiny',
+    'description' => 'The priority of this property for sorting in the views.',
+  );
+
+  db_add_field('roomify_properties', 'priority', $field);
+}
+
+/**
+ * Create table 'roomify_properties_revision'.
+ */
+function roomify_property_update_7103() {
+  db_create_table('roomify_properties_revision', drupal_get_schema_unprocessed('roomify_property', 'roomify_properties_revision'));
+
+  $field = array(
+    'description' => 'The current {roomify_properties_revision}.revision_id version identifier.',
+    'type' => 'int',
+    'unsigned' => TRUE,
+    'not null' => TRUE,
+    'default' => 0,
+  );
+
+  db_add_field('roomify_properties', 'revision_id', $field);
+}
+
+/**
+ * Add revisions for all existing properties.
+ */
+function roomify_property_update_7104() {
+  db_update('roomify_properties')
+    ->expression('revision_id', 'property_id')
+    ->execute();
+
+  $properties = db_select('roomify_properties', 'p')
+    ->fields('p', array('property_id', 'name', 'uid', 'created'))
+    ->execute()
+    ->fetchAll();
+
+  foreach ($properties as $property) {
+    db_insert('roomify_properties_revision')
+      ->fields(array(
+        'property_id' => $property->property_id,
+        'revision_id' => $property->property_id,
+        'name' => $property->name,
+        'revision_uid' => $property->uid,
+        'revision_timestamp' => $property->created,
+        'log' => '',
+      ))
+      ->execute();
+  }
+}
+
+/**
+ * Add entity translation revisions for all existing properties.
+ */
+function roomify_property_update_7105() {
+  $sp_descriptions = db_select('field_data_field_sp_description', 'd')
+    ->fields('d', array('entity_id', 'revision_id', 'language'))
+    ->condition('entity_type', 'roomify_property')
+    ->execute()
+    ->fetchAll();
+
+  foreach ($sp_descriptions as $sp_description) {
+    $property = roomify_property_load($sp_description->entity_id);
+
+    if ($property->language != $sp_description->language) {
+      foreach (array('entity_translation_revision', 'entity_translation') as $table_name) {
+        db_merge($table_name)
+          ->key(array(
+            'entity_type' => 'roomify_property',
+            'entity_id' => $property->property_id,
+            'language' => $sp_description->language,
+            'source' => $property->language,
+          ))
+          ->fields(array(
+            'entity_type' => 'roomify_property',
+            'entity_id' => $property->property_id,
+            'revision_id' => $property->property_id,
+            'language' => $sp_description->language,
+            'source' => $property->language,
+            'uid' => $property->uid,
+            'status' => 1,
+            'translate' => 0,
+            'created' => REQUEST_TIME,
+            'changed' => REQUEST_TIME,
+          ))
+          ->execute();
+      }
+    }
+  }
+}
+
+/**
+ * Add Pathauto module support.
+ */
+function roomify_property_update_7106() {
+  variable_set('pathauto_roomify_property_pattern', 'listing/[roomify_property:name]');
+}

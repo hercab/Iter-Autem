@@ -1,0 +1,12 @@
+name = XML sitemap entity
+description = Adds the custom entity links to the sitemap.
+package = XML sitemap
+core = 7.x
+
+dependencies[] = xmlsitemap
+dependencies[] = entity
+
+; Information added by drush on 2017-08-30
+version = "eaaf1dd750c17ccca9c58cf40d1cda815b77cbb2"
+project = "xmlsitemap"
+datestamp = "1504110007"

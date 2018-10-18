@@ -1,0 +1,15 @@
+name = Slick
+description = "Slick carousel, the last carousel you'll ever need."
+core = 7.x
+package = Slick
+
+dependencies[] = libraries (>=2.x)
+dependencies[] = ctools
+dependencies[] = jquery_update
+
+files[] = tests/slick.test
+
+; Information added by drush on 2016-12-09
+version = "eba6411910e1adf2d027607f4dbeb294be9ccd4b"
+project = "slick"
+datestamp = "1481271898"

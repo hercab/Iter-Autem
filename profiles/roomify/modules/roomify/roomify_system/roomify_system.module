@@ -1,0 +1,2521 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function roomify_system_menu() {
+  $items = array();
+
+  $items['admin/bat/config/global/settings'] = array(
+    'title' => 'Global Site Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('roomify_system_global_site_settings_form'),
+    'access arguments' => array('administer roomify global site settings'),
+  );
+
+  $items['admin/bat/config/availability-search/settings'] = array(
+    'title' => 'Availability Search Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('roomify_system_availability_search_settings_form'),
+    'access arguments' => array('administer roomify availability form settings'),
+  );
+
+  $items['admin/bat/config/commerce/settings'] = array(
+    'title' => 'Global Site Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('roomify_system_commerce_settings_form'),
+    'access arguments' => array('administer roomify global site settings'),
+  );
+
+  $items['admin/bat/config/addtoany/settings'] = array(
+    'title' => 'AddToAny Settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('roomify_system_addtoany_settings_form'),
+    'access arguments' => array('administer addtoany'),
+  );
+
+  $items['admin/config/content/roomify-footer'] = array(
+    'title' => 'Roomify Footer',
+    'description' => 'Edit the Site Footer text',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('roomify_footer_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer roomify footer'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/bat/orders/%commerce_order/view/dashboard'] = array(
+    'title' => 'Back to Dashboard',
+    'page callback' => 'roomify_system_redirect_to_dashboard',
+    'access callback' => 'commerce_order_customer_order_view_access',
+    'access arguments' => array(3),
+    'type' => MENU_LOCAL_ACTION,
+  );
+
+  $items['admin/config/content/roomify-terminology'] = array(
+    'title' => 'Roomify Terminology',
+    'description' => 'Change Roomify Terminology',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('variable_group_form', 'roomify'),
+    'access arguments' => array('administer roomify terminology'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/bat/pet/update'] = array(
+    'title' => 'Roomify Update PETs',
+    'description' => 'Update Roomify email templates (PET)',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('roomify_update_pets_form'),
+    'access arguments' => array('administer roomify global site settings'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/bat/properties/view-all'] = array();
+  $items['admin/bat/conversations/guest'] = array();
+  $items['admin/bat/conversations/owner'] = array();
+  $items['admin/bat/bookings'] = array();
+
+  return $items;
+}
+
+/**
+ * Menu item access callback to view order.
+ */
+function _roomify_system_commerce_order_view_access_pm($access, $context) {
+  return _roomify_system_commerce_order_view_access($context->data);
+}
+
+/**
+ * Menu item access callback to view order.
+ */
+function _roomify_system_commerce_order_view_access($order) {
+  if (user_access('view any commerce order') || commerce_order_access('view', $order)) {
+    return TRUE;
+  }
+
+  global $user;
+
+  if ($line_items = field_get_items('commerce_order', $order, 'commerce_line_items')) {
+    foreach ($line_items as $li) {
+      $line_item = commerce_line_item_load($li['line_item_id']);
+      if ($line_item->type == 'roomify_accommodation_booking') {
+        $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+
+        $unit = $line_item_wrapper->commerce_booking_reference->booking_event_reference->event_bat_unit_reference->value();
+        $type = bat_type_load($unit->type_id);
+        $property = roomify_property_load($type->field_st_property_reference[LANGUAGE_NONE][0]['target_id']);
+        $owner = field_get_items('roomify_property', $property, 'field_sp_owner');
+
+        // The property owner is viewing the order.
+        if ($user->uid == $owner[0]['target_id']) {
+          return TRUE;
+        }
+      }
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Redirect User to Dashboard.
+ */
+function roomify_system_redirect_to_dashboard() {
+  drupal_goto('user');
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function roomify_system_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'roomify_system') . '/views',
+  );
+}
+
+/**
+ * Implements hook_permission().
+ */
+function roomify_system_permission() {
+  return array(
+    'administer roomify global site settings' => array(
+      'title' => t('Administer Roomify Global Site Settings'),
+      'description' => t('Configure global site settings.'),
+    ),
+    'administer roomify footer' => array(
+      'title' => t('Administer Roomify Footer'),
+      'description' => t('Change the site footer text.'),
+    ),
+    'unpublish any type' => array(
+      'title' => t('Unpublish any type'),
+      'description' => t('Allows users to set any type as suspended.'),
+    ),
+    'unpublish own type' => array(
+      'title' => t('Unpublish own type'),
+      'description' => t('Allows users to set own type as suspended.'),
+    ),
+    'administer roomify terminology' => array(
+      'title' => t('Administer Roomify Terminology'),
+      'description' => t('Manage Roomify translatable variables.'),
+    ),
+    'administer roomify availability form settings' => array(
+      'title' => t('Administer Roomify Availability Search Settings'),
+      'description' => t('Administer Roomify Availability Search Settings'),
+    ),
+    'administer theme colors' => array(
+      'title' => t('Administer Theme Colors'),
+      'description' => t('Administer Theme Colors'),
+    ),
+    'view any commerce order' => array(
+      'title' => t('View any commerce order'),
+      'description' => t('Access to orders'),
+    ),
+    'configure recaptcha' => array(
+      'title' => t('Configure Google reCAPTCHA'),
+      'description' => t('Configure Google reCAPTCHA settings'),
+    ),
+    'administer pathauto patterns' => array(
+      'title' => t('Administer Pathauto patterns'),
+      'description' => t('Let changes default patterns for entities'),
+    ),
+    'view the availability global calendar' => array(
+      'title' => t('View the availability global calendar'),
+      'description' => t('Let user access to the global availability view'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_entityqueue_api().
+ */
+function roomify_system_entityqueue_api($module = NULL, $api = NULL) {
+  if ($module == "entityqueue" && $api == "entityqueue_default") {
+    return array("version" => "1");
+  }
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function roomify_system_block_info() {
+  $blocks = array();
+  $blocks['roomify_footer_block'] = array(
+    'info' => t('Roomify Footer'),
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function roomify_system_block_view($delta = '') {
+  $block = array();
+
+  switch ($delta) {
+    case 'roomify_footer_block':
+      $text = variable_get('roomify_footer_text', 'Roomify for Accommodations - Copyright © 2018');
+      $block['content'] = isset($text['value']) ? $text['value'] : $text;
+      break;
+  }
+
+  return $block;
+}
+
+/**
+ * Form "Roomify Footer".
+ */
+function roomify_footer_form($form, &$form_state) {
+  $text = variable_get('roomify_footer_text', 'Roomify for Accommodations - Copyright © 2018');
+  $form['roomify_footer_text'] = array(
+    '#type' => 'text_format',
+    '#title' => t('Footer'),
+    '#format' => 'rich_text',
+    '#description' => t('This text will be shown on the site footer.'),
+    '#default_value' => isset($text['value']) ? $text['value'] : $text,
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Form "Update Pets".
+ */
+function roomify_update_pets_form($form, &$form_state) {
+  $updated = variable_get('roomify_pets_updated', FALSE);
+
+  if (!$updated) {
+    $form['intro'] = array(
+      '#prefix' => '<div style="width:100%;font-size:18px;line-height:1.3em;margin-bottom:30px;">',
+      '#markup' => t('Hi! We have made some changes to email templates. Clicking here you will delete your templates and import the new ones. Please be aware that this action will delete your translated templates!'),
+      '#suffix' => '</div>',
+    );
+    $form['submit'] = array(
+      '#type' => 'submit',
+      '#value' => t('Update Templates'),
+    );
+  }
+  else {
+    $form['intro'] = array(
+      '#prefix' => '<div style="width:100%;font-size:18px;line-height:1.3em;margin-bottom:30px;">',
+      '#markup' => t('Nothing to update here!'),
+      '#suffix' => '</div>',
+    );
+  }
+
+  return $form;
+}
+
+/**
+ * Form "Update Pets" submit.
+ */
+function roomify_update_pets_form_submit($form, &$form_state) {
+  variable_set('roomify_pets_updated', TRUE);
+
+  db_truncate('pets')->execute();
+  module_load_include('install', 'roomify_casa_pet');
+  _casa_create_pet_templates();
+
+  module_load_include('install', 'roomify_contact');
+  roomify_contact_form_add_pet();
+
+  module_load_include('install', 'roomify_review');
+  _roomify_review_add_templates();
+
+  $form_state['redirect'] = 'user';
+  drupal_set_message(t('Email templates have been updated with success!'));
+}
+
+/**
+ * Helper to switch the language of the variables to the proper one.
+ */
+function _roomify_system_prepare_variables_realm() {
+  module_load_include('form.inc', 'variable_realm');
+
+  $language = variable_realm_form_key_current('language');
+
+  variable_realm_switch('language', $language);
+}
+
+/**
+ * Form "Global Site Settings".
+ */
+function roomify_system_global_site_settings_form($form, &$form_state) {
+  form_load_include($form_state, 'inc', 'variable_realm', 'variable_realm.variable');
+  _roomify_system_prepare_variables_realm();
+
+  global $user;
+
+  $allowed = FALSE;
+  $allowed_roles = array('administrator');
+  foreach ($user->roles as $role) {
+    if (in_array($role, $allowed_roles) || $user->uid == 1) {
+      $allowed = TRUE;
+
+      break;
+    }
+  }
+
+  $form['site_information'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Site details'),
+  );
+
+  $form['site_information']['site_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Site name'),
+    '#default_value' => variable_get('site_name', 'Drupal'),
+    '#required' => TRUE,
+  );
+
+  $homepage_options = roomify_system_get_homepage_options();
+  if (isset($homepage_options[drupal_get_path_alias(variable_get('site_frontpage', 'node'))])) {
+    $site_frontpage_advanced = FALSE;
+  }
+  else {
+    $site_frontpage_advanced = TRUE;
+  }
+
+  $form['front_page'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Front page'),
+  );
+  $form['front_page']['site_frontpage_page'] = array(
+    '#type' => 'select',
+    '#title' => t('Default front page'),
+    '#options' => $homepage_options,
+    '#default_value' => drupal_get_path_alias(variable_get('site_frontpage', 'node')),
+    '#empty_option' => t('- select -'),
+    '#states' => array(
+      'disabled' => array(
+        'input[name="site_frontpage_advanced"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+  $form['front_page']['site_frontpage_advanced'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Advanced front page settings'),
+    '#default_value' => $site_frontpage_advanced,
+  );
+  $form['front_page']['site_frontpage'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Default front page'),
+    '#default_value' => (variable_get('site_frontpage' != 'node')) ? drupal_get_path_alias(variable_get('site_frontpage', 'node')) : '',
+    '#size' => 40,
+    '#description' => t('Optionally, specify a relative URL to display as the front page.  Leave blank to display the default content feed.'),
+    '#field_prefix' => url(NULL, array('absolute' => TRUE)) . (variable_get('clean_url', 0) ? '' : '?q='),
+    '#states' => array(
+      'invisible' => array(
+        'input[name="site_frontpage_advanced"]' => array('checked' => FALSE),
+      ),
+    ),
+  );
+
+  $theme = variable_get('theme_default', 'bartik');
+
+  $form['logo'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Logo image settings'),
+    '#description' => t('If toggled on, the following logo will be displayed.'),
+    '#attributes' => array('class' => array('theme-settings-bottom')),
+  );
+  $form['logo']['default_logo'] = array(
+    '#type' => 'checkbox',
+    '#title' => t("Use the site's name instead of the logo"),
+    '#default_value' => theme_get_setting('default_logo', $theme),
+    '#tree' => FALSE,
+    '#description' => t('Check here if you want the theme to use the logo supplied with it.'),
+  );
+  $form['logo']['settings'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      // Hide the logo settings when using the default logo.
+      'invisible' => array(
+        'input[name="default_logo"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  if ($allowed) {
+    $form['logo']['settings']['logo_path'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Path to custom logo'),
+      '#description' => t('The path to the file you would like to use as your logo file instead of the default logo.'),
+      '#default_value' => theme_get_setting('logo_path', $theme),
+    );
+  }
+
+  $uploaded_logo = file_load(variable_get('roomify_logo_uploaded', 0));
+
+  $form['logo']['settings']['logo_upload'] = array(
+    '#type' => 'managed_file',
+    '#title' => t('Upload logo image'),
+    '#upload_location' => roomify_system_file_dir(),
+    '#default_value' => isset($uploaded_logo->fid) ? $uploaded_logo->fid : '',
+    '#upload_validators' => array('file_validate_extensions' => array('ico png gif jpg jpeg apng svg')),
+    '#theme' => 'roomify_image_thumb_upload',
+  );
+
+  $form['favicon'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Shortcut icon settings'),
+    '#description' => t("Your shortcut icon, or 'favicon', is displayed in the address bar and bookmarks of most browsers."),
+  );
+  $form['favicon']['default_favicon'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Use the default shortcut icon.'),
+    '#default_value' => theme_get_setting('default_favicon', $theme),
+    '#description' => t('Check here if you want the theme to use the default shortcut icon.'),
+  );
+  $form['favicon']['settings'] = array(
+    '#type' => 'container',
+    '#states' => array(
+      // Hide the favicon settings when using the default favicon.
+      'invisible' => array(
+        'input[name="default_favicon"]' => array('checked' => TRUE),
+      ),
+    ),
+  );
+
+  if ($allowed) {
+    $form['favicon']['settings']['favicon_path'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Path to custom icon'),
+      '#description' => t('The path to the image file you would like to use as your custom shortcut icon.'),
+      '#default_value' => theme_get_setting('favicon_path', $theme),
+    );
+  }
+
+  $form['favicon']['settings']['favicon_upload'] = array(
+    '#type' => 'file',
+    '#title' => t('Upload icon image'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+
+  $form['#submit'] = array('roomify_system_global_site_settings_form_submit');
+
+  variable_realm_variable_settings_form_alter($form, $form_state, 'roomify_system_global_site_settings_form');
+
+  return $form;
+}
+
+/**
+ * Validation function for the roomify_system_global_site_settings_form form.
+ */
+function roomify_system_global_site_settings_form_validate($form, &$form_state) {
+  module_load_include('inc', 'system', 'system.admin');
+
+  // Handle file uploads.
+  $validators = array('file_validate_is_image' => array());
+
+  // Check for a new uploaded logo.
+  $validators = array('file_validate_extensions' => array('ico png gif jpg jpeg apng svg'));
+
+  if (!empty($form_state['values']['logo_upload'])) {
+    variable_set('roomify_logo_uploaded', $form_state['values']['logo_upload']);
+  }
+
+  // Check for a new uploaded favicon.
+  $file = file_save_upload('favicon_upload', $validators);
+  if (isset($file)) {
+    // File upload was attempted.
+    if ($file) {
+      // Put the temporary file in form_values so we can save it on submit.
+      $form_state['values']['favicon_upload'] = $file;
+    }
+    else {
+      // File upload failed.
+      form_set_error('favicon_upload', t('The favicon could not be uploaded.'));
+    }
+  }
+
+  // If the user provided a path for a logo or favicon file, make sure a file
+  // exists at that path.
+  if (!empty($form_state['values']['logo_path'])) {
+    $path = _system_theme_settings_validate_path($form_state['values']['logo_path']);
+    if (!$path) {
+      form_set_error('logo_path', t('The custom logo path is invalid.'));
+    }
+  }
+  if (!empty($form_state['values']['favicon_path'])) {
+    $path = _system_theme_settings_validate_path($form_state['values']['favicon_path']);
+    if (!$path) {
+      form_set_error('favicon_path', t('The custom favicon path is invalid.'));
+    }
+  }
+
+  if ($form_state['values']['site_frontpage_advanced'] == 0) {
+    if (empty($form_state['values']['site_frontpage_page'])) {
+      form_set_error('site_frontpage_page', t('Default front page is required.'));
+    }
+  }
+  else {
+    // Check for empty front page path.
+    if (empty($form_state['values']['site_frontpage'])) {
+      // Set to default "node".
+      form_set_value($form['front_page']['site_frontpage'], 'node', $form_state);
+    }
+    else {
+      // Get the normal path of the front page.
+      form_set_value($form['front_page']['site_frontpage'], drupal_get_normal_path($form_state['values']['site_frontpage']), $form_state);
+    }
+    // Validate front page path.
+    if (!drupal_valid_path($form_state['values']['site_frontpage'])) {
+      form_set_error('site_frontpage', t("The path '%path' is either invalid or you do not have access to it.", array('%path' => $form_state['values']['site_frontpage'])));
+    }
+  }
+}
+
+/**
+ * Submit function for the roomify_system_global_site_settings_form form.
+ */
+function roomify_system_global_site_settings_form_submit($form, &$form_state) {
+  module_load_include('inc', 'system', 'system.admin');
+
+  $values = $form_state['values'];
+  if (isset($values['site_name'])) {
+    variable_set('site_name', $values['site_name']);
+  }
+
+  if ($values['site_frontpage_advanced']) {
+    variable_set('site_frontpage', $values['site_frontpage']);
+  }
+  else {
+    variable_set('site_frontpage', $values['site_frontpage_page']);
+  }
+
+  $theme = variable_get('theme_default', 'bartik');
+  $settings = variable_get('theme_' . $theme . '_settings', array());
+  // If no logo is set, show the site name.
+  if ($values['default_logo']) {
+    $settings['toggle_name'] = 1;
+    $settings['toggle_logo'] = 0;
+  }
+  else {
+    $settings['toggle_name'] = 0;
+    $settings['toggle_logo'] = 1;
+  }
+
+  $settings['default_favicon'] = $values['default_favicon'];
+
+  // If the user uploaded a new logo or favicon, save it to a permanent location
+  // and use it in place of the default theme-provided file.
+  if (!empty($values['logo_upload'])) {
+    $file = file_load($values['logo_upload']);
+    $filename = file_unmanaged_copy($file->uri, roomify_system_file_dir());
+    $settings['default_logo'] = 0;
+    $settings['logo_path'] = $filename;
+    $settings['toggle_logo'] = 1;
+  }
+
+  if (!empty($values['favicon_upload'])) {
+    $file = $values['favicon_upload'];
+    $filename = file_unmanaged_copy($file->uri, roomify_system_file_dir());
+    $settings['default_favicon'] = 0;
+    $settings['favicon_path'] = $filename;
+    $settings['toggle_favicon'] = 1;
+  }
+
+  // If the user entered a path relative to the system files directory for
+  // a logo or favicon, store a public:// URI so the theme system can handle it.
+  if (!empty($values['logo_path'])) {
+    $settings['logo_path'] = _system_theme_settings_validate_path($settings['logo_path']);
+    if (!$values['default_logo']) {
+      $settings['toggle_name'] = 0;
+      $settings['toggle_logo'] = 1;
+    }
+  }
+  if (!empty($values['favicon_path'])) {
+    $settings['favicon_path'] = _system_theme_settings_validate_path($settings['favicon_path']);
+  }
+
+  if (empty($values['default_favicon']) && !empty($values['favicon_path'])) {
+    $settings['favicon_mimetype'] = file_get_mimetype($settings['favicon_path']);
+  }
+
+  variable_set('theme_' . $theme . '_settings', $settings);
+
+  drupal_set_message(t('The configuration options have been saved.'));
+
+  drupal_flush_all_caches();
+}
+
+/**
+ * Redirect to the confirmation page when click on 'Delete all example content'.
+ */
+function roomify_system_global_site_settings_form_delete_example_content_submit($form, &$form_state) {
+  $form_state['redirect'] = 'admin/bat/config/global/settings/example-content/delete';
+}
+
+/**
+ * Implements hook_ctools_plugin_api().
+ */
+function roomify_system_ctools_plugin_api($module = NULL, $api = NULL) {
+  if ($module == "panels_mini" && $api == "panels_default") {
+    return array("version" => "1");
+  }
+}
+
+/**
+ * Helper function creates or updates menu links. This is mainly used in the
+ * hook_enable() functions of the various Roomify feature modules during site
+ * installation.
+ */
+function roomify_system_create_update_menu_link($title, $path, $menu = 'main-menu', $weight = 0, $enabled = 1, $plid = 0, array $options = array()) {
+  // If there is a preexisting menu item, load it, and update that.
+  $existing_item = db_select('menu_links', 'ml')->condition('link_path', $path)->condition('link_title', $title)->condition('menu_name', $menu)->fields('ml')->range(0, 1)->execute()->fetchAssoc();
+  // Otherwise prepare a new menu item.
+  $item = empty($existing_item) ? array() : $existing_item;
+
+  $item['link_title'] = $title;
+  $item['link_path'] = $path;
+  $item['menu_name'] = $menu;
+  $item['weight'] = $weight;
+  $item['enabled'] = $enabled;
+  $item['options'] = $options;
+  $item['language'] = 'en';
+  $item['i18n_menu'] = TRUE;
+  $item['customized'] = 1;
+  $item['expanded'] = 1;
+  $item['plid'] = $plid;
+
+  menu_link_save($item, $existing_item);
+
+  menu_rebuild();
+}
+
+/**
+ * Helper function creates or updates menu links. This is mainly used in the
+ * hook_enable() functions of the various Roomify feature modules during site
+ * installation.
+ */
+function roomify_system_create_update_menu_link_with_token($title, $path, $menu = 'main-menu', $weight = 0, $enabled = 1, $plid = 0, array $options = array()) {
+  $existing_item = db_select('menu_links', 'ml')->condition('link_path', $path)->condition('link_title', $title)->condition('menu_name', $menu)->fields('ml')->range(0, 1)->execute()->fetchAssoc();
+  // Otherwise prepare a new menu item.
+  $item = empty($existing_item) ? array() : $existing_item;
+  $item = array(
+    'link_path' => 'menutoken/' . uniqid(),
+    'link_title' => $title,
+    'menu_name' => 'user-menu',
+    'weight' => $weight,
+    'language' => 'en',
+    'options' => array(
+      'menu_token_link_path' => $path,
+      'menu_token_data' => array(
+        'user' => array(
+          'type' => 'user',
+          'plugin' => 'user_context',
+          'options' => array(),
+        ),
+      ),
+    ),
+    'menu_token_options' => array(
+      'clear' => 0,
+    ),
+    'attributes' => array(
+      'title' => '',
+    ),
+    'plid' => $plid,
+    'enabled' => $enabled,
+    'alter' => TRUE,
+    'menu_token_enabled' => 1,
+    'menu_token_type_node' => '_none',
+    'menu_token_type_user' => 'user_context',
+    'menu_token_clear' => 0,
+  );
+
+  menu_link_save($item, $existing_item);
+
+  menu_rebuild();
+
+}
+
+/**
+ * Helper function to get the mlid of updates menu links.
+ */
+function roomify_system_get_menu_link_id($title, $path, $menu = 'main-menu') {
+  // If there is a preexisting menu item, load it, and update that.
+  $existing_item = db_select('menu_links', 'ml')->condition('link_path', $path)->condition('link_title', $title)->condition('menu_name', $menu)->fields('ml')->range(0, 1)->execute()->fetchAssoc();
+
+  $mlid = empty($existing_item) ? 0 : $existing_item['mlid'];
+
+  return $mlid;
+}
+
+/**
+ * Implements hook_default_panels_mini().
+ */
+function roomify_system_default_panels_mini() {
+  $export = array();
+
+  $mini = new stdClass();
+  $mini->disabled = FALSE; /* Edit this to true to make a default mini disabled initially */
+  $mini->api_version = 1;
+  $mini->name = 'sidebar';
+  $mini->category = '';
+  $mini->admin_title = 'Sidebar';
+  $mini->admin_description = '';
+  $mini->requiredcontexts = array();
+  $mini->contexts = array();
+  $mini->relationships = array();
+  $display = new panels_display();
+  $display->layout = 'onecol';
+  $display->layout_settings = array();
+  $display->panel_settings = array(
+    'style_settings' => array(
+      'default' => NULL,
+      'top' => NULL,
+      'middle' => NULL,
+      'bottom' => NULL,
+    ),
+  );
+  $display->cache = array();
+  $display->title = '';
+  $display->uuid = '9df672c9-d9d7-4125-aa76-369dc01896c9';
+  $display->storage_type = 'panels_mini';
+  $display->storage_id = 'sidebar';
+  $display->content = array();
+  $display->panels = array();
+  $pane = new stdClass();
+  $pane->pid = 'new-2bc0e516-24ac-4378-b368-d1afc0f67c7f';
+  $pane->panel = 'middle';
+  $pane->type = 'custom';
+  $pane->subtype = 'custom';
+  $pane->shown = TRUE;
+  $pane->access = array();
+  $pane->configuration = array(
+    'admin_title' => 'Close Sidebar',
+    'title' => '',
+    'title_heading' => 'h2',
+    'body' => '<div id="close-sidebar-icon">Close</div>',
+    'format' => 'rich_text',
+    'substitute' => TRUE,
+  );
+  $pane->cache = array();
+  $pane->style = array(
+    'settings' => NULL,
+  );
+  $pane->css = array(
+    'css_id' => '',
+    'css_class' => 'close-sidebar',
+  );
+  $pane->extras = array();
+  $pane->position = 0;
+  $pane->locks = array();
+  $pane->uuid = '2bc0e516-24ac-4378-b368-d1afc0f67c7f';
+  $display->content['new-2bc0e516-24ac-4378-b368-d1afc0f67c7f'] = $pane;
+  $display->panels['middle'][0] = 'new-2bc0e516-24ac-4378-b368-d1afc0f67c7f';
+  $pane = new stdClass();
+  $pane->pid = 'new-dba3dadc-f6ad-4c23-85f7-c809d02aecc0';
+  $pane->panel = 'middle';
+  $pane->type = 'roomify_sidebar_user_menu';
+  $pane->subtype = 'roomify_sidebar_user_menu';
+  $pane->shown = TRUE;
+  $pane->access = array(
+    'plugins' => array(
+      0 => array(
+        'name' => 'role',
+        'settings' => array(
+          'rids' => array(
+            0 => 2,
+          ),
+        ),
+        'context' => 'logged-in-user',
+        'not' => FALSE,
+      ),
+    ),
+  );
+  $pane->configuration = array(
+    'roomify_sidebar_user_menu_title' => NULL,
+    'override_title' => 1,
+    'override_title_text' => '',
+    'override_title_heading' => 'h2',
+  );
+  $pane->cache = array();
+  $pane->style = array(
+    'settings' => NULL,
+  );
+  $pane->css = array();
+  $pane->extras = array();
+  $pane->position = 1;
+  $pane->locks = array();
+  $pane->uuid = 'dba3dadc-f6ad-4c23-85f7-c809d02aecc0';
+  $display->content['new-dba3dadc-f6ad-4c23-85f7-c809d02aecc0'] = $pane;
+  $display->panels['middle'][1] = 'new-dba3dadc-f6ad-4c23-85f7-c809d02aecc0';
+  $pane = new stdClass();
+  $pane->pid = 'new-03c4e9e3-293e-4cdb-ad32-c1cbe7322676';
+  $pane->panel = 'middle';
+  $pane->type = 'block';
+  $pane->subtype = 'user-login';
+  $pane->shown = TRUE;
+  $pane->access = array(
+    'plugins' => array(
+      0 => array(
+        'name' => 'path_visibility',
+        'settings' => array(
+          'visibility_setting' => '0',
+          'paths' => 'user
+          user/login',
+        ),
+        'context' => 'empty',
+        'not' => FALSE,
+      ),
+    ),
+  );
+  $pane->configuration = array(
+    'override_title' => 0,
+    'override_title_text' => '',
+    'override_title_heading' => 'h2',
+  );
+  $pane->cache = array();
+  $pane->style = array(
+    'settings' => NULL,
+  );
+  $pane->css = array();
+  $pane->extras = array();
+  $pane->position = 2;
+  $pane->locks = array();
+  $pane->uuid = '03c4e9e3-293e-4cdb-ad32-c1cbe7322676';
+  $display->content['new-03c4e9e3-293e-4cdb-ad32-c1cbe7322676'] = $pane;
+  $display->panels['middle'][2] = 'new-03c4e9e3-293e-4cdb-ad32-c1cbe7322676';
+  $pane = new stdClass();
+  $pane->pid = 'new-2d7db47a-46fe-4fc4-b05b-2f05c6a277bb';
+  $pane->panel = 'middle';
+  $pane->type = 'block';
+  $pane->subtype = 'menu-roomify_dashboard_menu';
+  $pane->shown = TRUE;
+  $pane->access = array(
+    'plugins' => array(
+      0 => array(
+        'name' => 'php',
+        'settings' => array(
+          'description' => 'User is logged in',
+          'php' => 'return user_is_logged_in();',
+        ),
+        'not' => FALSE,
+      ),
+    ),
+  );
+  $pane->configuration = array(
+    'override_title' => 1,
+    'override_title_text' => '',
+    'override_title_heading' => 'h2',
+  );
+  $pane->cache = array();
+  $pane->style = array(
+    'settings' => NULL,
+  );
+  $pane->css = array();
+  $pane->extras = array();
+  $pane->position = 3;
+  $pane->locks = array();
+  $pane->uuid = '2d7db47a-46fe-4fc4-b05b-2f05c6a277bb';
+  $display->content['new-2d7db47a-46fe-4fc4-b05b-2f05c6a277bb'] = $pane;
+  $display->panels['middle'][3] = 'new-2d7db47a-46fe-4fc4-b05b-2f05c6a277bb';
+  $display->hide_title = PANELS_TITLE_FIXED;
+  $display->title_pane = 'new-03c4e9e3-293e-4cdb-ad32-c1cbe7322676';
+  $mini->display = $display;
+  $export['sidebar'] = $mini;
+
+  $mini = new stdClass();
+  $mini->disabled = FALSE; /* Edit this to true to make a default mini disabled initially */
+  $mini->api_version = 1;
+  $mini->name = 'footer';
+  $mini->category = '';
+  $mini->admin_title = 'Footer';
+  $mini->admin_description = '';
+  $mini->requiredcontexts = array();
+  $mini->contexts = array();
+  $mini->relationships = array();
+  $display = new panels_display();
+  $display->layout = 'onecol';
+  $display->layout_settings = array();
+  $display->panel_settings = array(
+    'style_settings' => array(
+      'default' => NULL,
+      'middle' => NULL,
+    ),
+  );
+  $display->cache = array();
+  $display->title = '';
+  $display->uuid = 'e3d24847-a883-4b8a-b687-1fb2aaa83b78';
+  $display->content = array();
+  $display->panels = array();
+  $pane = new stdClass();
+  $pane->pid = 'new-f95cd84b-a9aa-4d59-8606-41ce82377a7a';
+  $pane->panel = 'middle';
+  $pane->type = 'block';
+  $pane->subtype = 'roomify_social_profiles-roomify_social_profiles';
+  $pane->shown = TRUE;
+  $pane->access = array();
+  $pane->configuration = array(
+    'override_title' => 1,
+    'override_title_text' => '',
+    'override_title_heading' => 'h2',
+  );
+  $pane->cache = array();
+  $pane->style = array(
+    'settings' => NULL,
+  );
+  $pane->css = array();
+  $pane->extras = array();
+  $pane->position = 0;
+  $pane->locks = array();
+  $pane->uuid = 'f95cd84b-a9aa-4d59-8606-41ce82377a7a';
+  $display->content['new-f95cd84b-a9aa-4d59-8606-41ce82377a7a'] = $pane;
+  $display->panels['middle'][0] = 'new-f95cd84b-a9aa-4d59-8606-41ce82377a7a';
+  $pane = new stdClass();
+  $pane->pid = 'new-fcdb6e7c-2358-4842-ba3b-e89ced63d484';
+  $pane->panel = 'middle';
+  $pane->type = 'block';
+  $pane->subtype = 'roomify_system-roomify_footer_block';
+  $pane->shown = TRUE;
+  $pane->access = array();
+  $pane->configuration = array(
+    'override_title' => 1,
+    'override_title_text' => '',
+    'override_title_heading' => 'h2',
+  );
+  $pane->cache = array();
+  $pane->style = array(
+    'settings' => NULL,
+  );
+  $pane->css = array();
+  $pane->extras = array();
+  $pane->position = 1;
+  $pane->locks = array();
+  $pane->uuid = 'fcdb6e7c-2358-4842-ba3b-e89ced63d484';
+  $display->content['new-fcdb6e7c-2358-4842-ba3b-e89ced63d484'] = $pane;
+  $display->panels['middle'][1] = 'new-fcdb6e7c-2358-4842-ba3b-e89ced63d484';
+  $display->hide_title = PANELS_TITLE_FIXED;
+  $display->title_pane = '0';
+  $mini->display = $display;
+
+  $export['footer'] = $mini;
+
+  return $export;
+}
+
+/**
+ * Implements hook_roomify_rights().
+ */
+function roomify_system_roomify_rights() {
+  $permissions = array_keys(user_permission_get_modules());
+
+  $rights['roomify_system'] = array(
+    'anonymous user' => array(
+      'access checkout',
+      'access content',
+      'access comments',
+      'view files',
+      'book units',
+      'access better messages',
+      'display EU Cookie Compliance popup',
+      'use search_api_sorts',
+      'view calendar data for any availability event',
+      'access units calendar index service',
+      'access events calendar index service',
+      'display popup message',
+    ),
+    'authenticated user' => array(
+      'access checkout',
+      'access content',
+      'access comments',
+      'post comments',
+      'skip comment approval',
+      'view files',
+      'book units',
+      'access user profiles',
+      'access better messages',
+      'use manualcrop',
+      'use search_api_sorts',
+      'view calendar data for any availability event',
+      'access units calendar index service',
+      'access events calendar index service',
+      'view own commerce_customer_profile entities',
+      'edit own commerce_customer_profile entities',
+      'display popup message',
+    ),
+    'guest' => array(
+      'edit own guest profile',
+      'flag favorites',
+      'unflag favorites',
+      'view own roomify_conversation entities',
+      'update own roomify_conversation entities',
+      'view own commerce_order entities',
+      'view own guest profile',
+      'create commerce_customer_profile entities',
+    ),
+    'property owner' => array(
+      'edit own property_owner profile',
+      'flag favorites',
+      'unflag favorites',
+      'view own roomify_conversation entities',
+      'update own roomify_conversation entities',
+      'update own roomify_property entities',
+      'update own bat_booking entities',
+      'view own bat_booking entities',
+      'delete own bat_booking entities',
+      'create bat_booking entities of bundle roomify_accommodation_booking',
+      'view own bat_event entities',
+      'update own bat_event entities',
+      'view calendar data for any availability event',
+      'view calendar data for any pricing event',
+      'view own bat_unit entities',
+      'update own bat_unit entities',
+      'view own bat_type entities',
+      'update own bat_type entities',
+      'create roomify_property entities of bundle casa_property',
+      'delete own roomify_property entities of bundle casa_property',
+      'create roomify_property entities of bundle locanda_property',
+      'delete own roomify_property entities of bundle locanda_property',
+      'create bat_event entities',
+      'access units index service',
+      'access edit unit service',
+      'access add unit service',
+      'access units calendar index service',
+      'access events index service',
+      'access events calendar index service',
+      'access edit event service',
+      'create users',
+      'view past event information',
+      'create bat_unit entities',
+      'delete own bat_type entities',
+      'delete own bat_unit entities',
+      'unpublish own property',
+      'unpublish own type',
+      'edit meta tags',
+      'view any commerce_customer_profile entity',
+      'create commerce_customer_profile entities',
+      'view own property_owner profile',
+      'update own roomify_rate entities',
+      'view the availability global calendar',
+    ),
+    'roomify manager' => array(
+      'administer fields',
+      'unpublish any type',
+      'view any bat_type unpublished entity',
+      'unpublish any property',
+      'view any unpublished properties',
+      'administer roomify footer',
+      'administer roomify terminology',
+      'flag favorites',
+      'unflag favorites',
+      'view own roomify_conversation entities',
+      'update own roomify_conversation entities',
+      'update own roomify_property entities',
+      'update any roomify_property entity',
+      'update any bat_type entity',
+      'update any bat_unit entity',
+      'delete any bat_type entity of bundle room',
+      'view any roomify_conversation entity',
+      'create roomify_property entities of bundle casa_property',
+      'delete any roomify_property entity of bundle casa_property',
+      'create roomify_property entities of bundle locanda_property',
+      'delete any roomify_property entity of bundle locanda_property',
+      'create bat_event entities',
+      'view calendar data for any availability event',
+      'view calendar data for any pricing event',
+      'access units index service',
+      'access edit unit service',
+      'access add unit service',
+      'access units calendar index service',
+      'access events index service',
+      'access events calendar index service',
+      'access edit event service',
+      'view past event information',
+      'create bat_unit entities',
+      'update any bat_booking entity',
+      'update own bat_booking entities',
+      'view any bat_booking entity',
+      'view any bat_event entity',
+      'view any bat_unit entity',
+      'delete own bat_unit entities',
+      'delete any bat_unit entity',
+      'delete any bat_booking entity',
+      'view any bat_type entity',
+      'create bat_booking entities of bundle roomify_accommodation_booking',
+      'update any bat_event entity',
+      'update any roomify_conversation entity',
+      'administer payment methods',
+      'access content overview',
+      'configure store',
+      // Need this for the content overview link.
+      'create blog content',
+      'create activity content',
+      'create location content',
+      'create page content',
+      'bypass node access',
+      'access content',
+      'administer menu',
+      'bypass paragraphs bundle content access',
+      'administer previewable email templates',
+      'edit any entityform',
+      'delete any entityform',
+      'view any entityform',
+      // Give permission to add/edit/delete terms in
+      // the area, area type, amenities, and tags vocabs.
+      'add terms in amenities',
+      'add terms in location',
+      'add terms in area_type',
+      'add terms in tags',
+      'add terms in property_type',
+      'add terms in category',
+      'edit terms in amenities',
+      'delete terms in amenities',
+      'edit terms in area_type',
+      'delete terms in area_type',
+      'edit terms in property_type',
+      'delete terms in property_type',
+      'edit terms in category',
+      'delete terms in category',
+      'edit terms in tags',
+      'delete terms in tags',
+      'edit terms in location',
+      'delete terms in location',
+      'use text format landing_page_text',
+      'use text format rich_text',
+      // Give permission to add users and give them
+      // the guest, property owner, or roomify manager role.
+      'administer users',
+      'create users',
+      'assign guest role',
+      'assign property owner role',
+      'assign roomify manager role',
+      'assign content editor role',
+      // Give permission to change social sharing platforms.
+      'administer rrssb',
+      'administer roomify_social_profiles',
+      'administer roomify_social_feeds',
+      'administer roomify global site settings',
+      // Profiles2.
+      'administer profile types',
+      'administer profiles',
+      'view own property_owner profile',
+      // Access Redirects.
+      'administer redirects',
+      'use media wysiwyg',
+      'access media browser',
+      'create files',
+      'view own private files',
+      'view own files',
+      'view private files',
+      'view files',
+      'administer roomify availability form settings',
+      'administer roomify_customer_support',
+      'edit meta tags',
+      'administer theme colors',
+      'edit any commerce_customer_profile entity',
+      'view any commerce_customer_profile entity',
+      'create commerce_customer_profile entities',
+      'view any commerce_order entity',
+      'view any commerce_order entity of bundle commerce_order',
+      'view own commerce_order entities',
+      'view any commerce order',
+      'edit any commerce_order entity',
+      'configure bat settings',
+      'configure recaptcha',
+      'administer addtoany',
+      'create url aliases',
+      'administer pathauto patterns',
+      'administer xmlsitemap',
+      'view the availability global calendar',
+      'use yoast seo',
+      'popup message administration',
+    ),
+    'content editor' => array(
+      'access content overview',
+      'view own unpublished content',
+      'create activity content',
+      'edit own activity content',
+      'delete own activity content',
+      'create blog content',
+      'edit own blog content',
+      'delete own blog content',
+      'create landing_page content',
+      'edit own landing_page content',
+      'delete own landing_page content',
+      'create page content',
+      'edit own page content',
+      'delete own page content',
+      'create location content',
+      'edit own location content',
+      'delete own location content',
+      'use media wysiwyg',
+      'access media browser',
+      'create files',
+      'view own private files',
+      'view own files',
+      'edit meta tags',
+    ),
+    'administrator' => $permissions,
+  );
+
+  if ($authenticated_user_role = user_role_load_by_name('authenticated user')) {
+    $rights['roomify_system']['property owner'][] = 'edit users with role ' . $authenticated_user_role->rid;
+  }
+  if ($guest_role = user_role_load_by_name('guest')) {
+    $rights['roomify_system']['property owner'][] = 'edit users with role ' . $guest_role->rid;
+  }
+
+  if (module_exists('roomify_channel_connector')) {
+    $rights['roomify_system']['roomify manager'][] = 'configure channel management';
+  }
+
+  return $rights;
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function roomify_system_entity_insert($entity, $type) {
+  if (variable_get('roomify_installed_product', '') == 'accommodations') {
+    if ($type == 'bat_type' && in_array($entity->type, array('home', 'room'))) {
+      roomify_system_create_standard_rates($entity);
+    }
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function roomify_system_entity_delete($entity, $type) {
+  if (variable_get('roomify_installed_product', '') == 'accommodations') {
+    if ($type == 'bat_type' && in_array($entity->type, array('home', 'room'))) {
+      roomify_system_delete_rates($entity);
+    }
+  }
+  // Remove the referenced line item if we are deleting a bat_booking.
+  if ($type == 'bat_booking') {
+    if ($entity->type == 'roomify_accommodation_booking') {
+      if ($line_item_id = field_get_items('bat_booking', $entity, 'booking_line_item_reference')) {
+        commerce_line_item_delete($line_item_id[0]['target_id']);
+      }
+    }
+  }
+}
+
+/**
+ * Create "Standard", "Weekly" and "Monthly" rates.
+ */
+function roomify_system_create_standard_rates($type) {
+  $event_type = bat_event_type_load('pricing');
+
+  // Create "Standard" (nightly) rate.
+  $standard_rate = roomify_rate_create(
+    array(
+      'name' => 'Standard',
+      'type' => 'standard',
+      'uid' => $type->uid,
+      'data' => array(
+        'standard' => TRUE,
+      ),
+    )
+  );
+
+  $standard_rate->rate_default_rate[LANGUAGE_NONE][0] = array(
+    'amount' => 10000,
+    'currency_code' => 'USD',
+  );
+
+  // Set price from type if available.
+  if (isset($type->field_st_default_price[LANGUAGE_NONE][0])) {
+    $standard_rate->rate_default_rate[LANGUAGE_NONE][0]['amount'] = $type->field_st_default_price[LANGUAGE_NONE][0]['amount'];
+    $standard_rate->rate_default_rate[LANGUAGE_NONE][0]['currency_code'] = $type->field_st_default_price[LANGUAGE_NONE][0]['currency_code'];
+  }
+  $standard_rate->rate_event_type_reference[LANGUAGE_NONE][0]['target_id'] = $event_type->id;
+  $standard_rate->rate_bat_type_reference[LANGUAGE_NONE][0]['target_id'] = $type->type_id;
+
+  $standard_rate->save();
+
+  // Create "Weekly" rate.
+  $weekly_rate = roomify_rate_create(
+    array(
+      'name' => 'Weekly',
+      'type' => 'standard',
+      'uid' => $type->uid,
+      'data' => array(
+        'weekly' => TRUE,
+      ),
+    )
+  );
+
+  $weekly_rate->rate_default_rate[LANGUAGE_NONE][0] = array(
+    'amount' => 70000,
+    'currency_code' => 'USD',
+  );
+
+  // Set price from type if available.
+  if (isset($type->field_st_default_price[LANGUAGE_NONE][0])) {
+    $weekly_rate->rate_default_rate[LANGUAGE_NONE][0]['amount'] = $type->field_st_default_price[LANGUAGE_NONE][0]['amount'] * 7;
+    $weekly_rate->rate_default_rate[LANGUAGE_NONE][0]['currency_code'] = $type->field_st_default_price[LANGUAGE_NONE][0]['currency_code'];
+  }
+  $weekly_rate->rate_event_type_reference[LANGUAGE_NONE][0]['target_id'] = $event_type->id;
+  $weekly_rate->rate_bat_type_reference[LANGUAGE_NONE][0]['target_id'] = $type->type_id;
+
+  $weekly_rate_restriction = roomify_rate_restriction_create(
+    array(
+      'type' => 'standard',
+      'uid' => $type->uid,
+      'label' => 'Weekly restriction',
+    )
+  );
+  $weekly_rate_restriction->rate_minimum_stay[LANGUAGE_NONE][0]['value'] = 7;
+  $weekly_rate_restriction->save();
+
+  $weekly_rate->rate_restrictions[LANGUAGE_NONE][0]['target_id'] = $weekly_rate_restriction->rate_restriction_id;
+
+  $weekly_rate->save();
+
+  // Create "Monthly" rate.
+  $monthly_rate = roomify_rate_create(
+    array(
+      'name' => 'Monthly',
+      'type' => 'standard',
+      'uid' => $type->uid,
+      'data' => array(
+        'monthly' => TRUE,
+      ),
+    )
+  );
+
+  $monthly_rate->rate_default_rate[LANGUAGE_NONE][0] = array(
+    'amount' => 280000,
+    'currency_code' => 'USD',
+  );
+
+  // Set price from type if available.
+  if (isset($type->field_st_default_price[LANGUAGE_NONE][0])) {
+    $monthly_rate->rate_default_rate[LANGUAGE_NONE][0]['amount'] = $type->field_st_default_price[LANGUAGE_NONE][0]['amount'] * 28;
+    $monthly_rate->rate_default_rate[LANGUAGE_NONE][0]['currency_code'] = $type->field_st_default_price[LANGUAGE_NONE][0]['currency_code'];
+  }
+  $monthly_rate->rate_event_type_reference[LANGUAGE_NONE][0]['target_id'] = $event_type->id;
+  $monthly_rate->rate_bat_type_reference[LANGUAGE_NONE][0]['target_id'] = $type->type_id;
+
+  $monthly_rate_restriction = roomify_rate_restriction_create(
+    array(
+      'type' => 'standard',
+      'uid' => $type->uid,
+      'label' => 'Monthly restriction',
+    )
+  );
+  $monthly_rate_restriction->rate_minimum_stay[LANGUAGE_NONE][0]['value'] = 28;
+  $monthly_rate_restriction->save();
+
+  $monthly_rate->rate_restrictions[LANGUAGE_NONE][0]['target_id'] = $monthly_rate_restriction->rate_restriction_id;
+
+  $monthly_rate->save();
+}
+
+/**
+ * Create "Standard", "Weekly" and "Monthly" rates per Person.
+ */
+function roomify_system_create_standard_rates_per_person($type, $ranges) {
+  $event_type = bat_event_type_load('pricing');
+
+  $rates = array();
+
+  foreach ($ranges as $key => $range) {
+    $range_label = (isset($range['min'])) ? 'Min people: ' . $range['min'] : '';
+    $range_label .= (isset($range['max'])) ? ((!empty($range_label)) ? ', ' : '') . 'Max people: ' . $range['max'] : '';
+
+    // Create "Standard" (nightly) rate.
+    $standard_rate = roomify_rate_create(
+      array(
+        'name' => 'Standard (' . $range_label . ')',
+        'type' => 'standard',
+        'uid' => $type->uid,
+        'data' => array(
+          'standard' => TRUE,
+          'per_person' => TRUE,
+        ),
+      )
+    );
+
+    $standard_rate->rate_default_rate[LANGUAGE_NONE][0] = array(
+      'amount' => 10000,
+      'currency_code' => 'USD',
+    );
+
+    // Set price from type if available.
+    if (isset($type->field_st_default_price[LANGUAGE_NONE][0])) {
+      $standard_rate->rate_default_rate[LANGUAGE_NONE][0]['amount'] = $type->field_st_default_price[LANGUAGE_NONE][0]['amount'];
+      $standard_rate->rate_default_rate[LANGUAGE_NONE][0]['currency_code'] = $type->field_st_default_price[LANGUAGE_NONE][0]['currency_code'];
+    }
+    $standard_rate->rate_event_type_reference[LANGUAGE_NONE][0]['target_id'] = $event_type->id;
+    $standard_rate->rate_bat_type_reference[LANGUAGE_NONE][0]['target_id'] = $type->type_id;
+
+    $standard_rate_restriction = roomify_rate_restriction_create(
+      array(
+        'type' => 'standard',
+        'uid' => $type->uid,
+        'label' => 'Standard restriction',
+      )
+    );
+    if (isset($range['min'])) {
+      $standard_rate_restriction->rate_minimum_people[LANGUAGE_NONE][0]['value'] = $range['min'];
+    }
+    if (isset($range['max'])) {
+      $standard_rate_restriction->rate_maximum_people[LANGUAGE_NONE][0]['value'] = $range['max'];
+    }
+
+    $standard_rate_restriction->save();
+
+    $standard_rate->rate_restrictions[LANGUAGE_NONE][0]['target_id'] = $standard_rate_restriction->rate_restriction_id;
+
+    $standard_rate->save();
+
+    // Create "Weekly" rate.
+    $weekly_rate = roomify_rate_create(
+      array(
+        'name' => 'Weekly (' . $range_label . ')',
+        'type' => 'standard',
+        'uid' => $type->uid,
+        'data' => array(
+          'weekly' => TRUE,
+          'per_person' => TRUE,
+        ),
+      )
+    );
+
+    $weekly_rate->rate_default_rate[LANGUAGE_NONE][0] = array(
+      'amount' => 70000,
+      'currency_code' => 'USD',
+    );
+
+    // Set price from type if available.
+    if (isset($type->field_st_default_price[LANGUAGE_NONE][0])) {
+      $weekly_rate->rate_default_rate[LANGUAGE_NONE][0]['amount'] = $type->field_st_default_price[LANGUAGE_NONE][0]['amount'] * 7;
+      $weekly_rate->rate_default_rate[LANGUAGE_NONE][0]['currency_code'] = $type->field_st_default_price[LANGUAGE_NONE][0]['currency_code'];
+    }
+    $weekly_rate->rate_event_type_reference[LANGUAGE_NONE][0]['target_id'] = $event_type->id;
+    $weekly_rate->rate_bat_type_reference[LANGUAGE_NONE][0]['target_id'] = $type->type_id;
+
+    $weekly_rate_restriction = roomify_rate_restriction_create(
+      array(
+        'type' => 'standard',
+        'uid' => $type->uid,
+        'label' => 'Weekly restriction',
+      )
+    );
+    $weekly_rate_restriction->rate_minimum_stay[LANGUAGE_NONE][0]['value'] = 7;
+
+    if (isset($range['min'])) {
+      $weekly_rate_restriction->rate_minimum_people[LANGUAGE_NONE][0]['value'] = $range['min'];
+    }
+    if (isset($range['max'])) {
+      $weekly_rate_restriction->rate_maximum_people[LANGUAGE_NONE][0]['value'] = $range['max'];
+    }
+
+    $weekly_rate_restriction->save();
+
+    $weekly_rate->rate_restrictions[LANGUAGE_NONE][0]['target_id'] = $weekly_rate_restriction->rate_restriction_id;
+
+    $weekly_rate->save();
+
+    // Create "Monthly" rate.
+    $monthly_rate = roomify_rate_create(
+      array(
+        'name' => 'Monthly (' . $range_label . ')',
+        'type' => 'standard',
+        'uid' => $type->uid,
+        'data' => array(
+          'monthly' => TRUE,
+          'per_person' => TRUE,
+        ),
+      )
+    );
+
+    $monthly_rate->rate_default_rate[LANGUAGE_NONE][0] = array(
+      'amount' => 280000,
+      'currency_code' => 'USD',
+    );
+
+    // Set price from type if available.
+    if (isset($type->field_st_default_price[LANGUAGE_NONE][0])) {
+      $monthly_rate->rate_default_rate[LANGUAGE_NONE][0]['amount'] = $type->field_st_default_price[LANGUAGE_NONE][0]['amount'] * 28;
+      $monthly_rate->rate_default_rate[LANGUAGE_NONE][0]['currency_code'] = $type->field_st_default_price[LANGUAGE_NONE][0]['currency_code'];
+    }
+    $monthly_rate->rate_event_type_reference[LANGUAGE_NONE][0]['target_id'] = $event_type->id;
+    $monthly_rate->rate_bat_type_reference[LANGUAGE_NONE][0]['target_id'] = $type->type_id;
+
+    $monthly_rate_restriction = roomify_rate_restriction_create(
+      array(
+        'type' => 'standard',
+        'uid' => $type->uid,
+        'label' => 'Monthly restriction',
+      )
+    );
+    $monthly_rate_restriction->rate_minimum_stay[LANGUAGE_NONE][0]['value'] = 28;
+
+    if (isset($range['min'])) {
+      $monthly_rate_restriction->rate_minimum_people[LANGUAGE_NONE][0]['value'] = $range['min'];
+    }
+    if (isset($range['max'])) {
+      $monthly_rate_restriction->rate_maximum_people[LANGUAGE_NONE][0]['value'] = $range['max'];
+    }
+
+    $monthly_rate_restriction->save();
+
+    $monthly_rate->rate_restrictions[LANGUAGE_NONE][0]['target_id'] = $monthly_rate_restriction->rate_restriction_id;
+
+    $monthly_rate->save();
+
+    $rates[$key] = array(
+      'standard' => $standard_rate,
+      'weekly' => $weekly_rate,
+      'monthly' => $monthly_rate,
+    );
+  }
+
+  return $rates;
+}
+
+/**
+ * Delete rates associated with a type when it is deleted.
+ */
+function roomify_system_delete_rates($type) {
+  // Fetch rates referenced by this type.
+  $query = new EntityFieldQuery();
+
+  $query->entityCondition('entity_type', 'roomify_rate')
+    ->fieldCondition('rate_bat_type_reference', 'target_id', $type->type_id, '=');
+
+  $result = $query->execute();
+
+  if (isset($result['roomify_rate'])) {
+    foreach ($result['roomify_rate'] as $rate_result) {
+      $rate = roomify_rate_load($rate_result->rate_id);
+      roomify_rate_delete($rate);
+    }
+  }
+}
+
+/**
+ * Commerce settings form.
+ */
+function roomify_system_commerce_settings_form($form, &$form_state) {
+  form_load_include($form_state, 'inc', 'rules', 'ui/ui.forms');
+
+  // Build a currency options list from all defined currencies.
+  $options = array();
+
+  foreach (commerce_currencies(FALSE, TRUE) as $currency_code => $currency) {
+    $options[$currency_code] = t('@code - !name', array(
+      '@code' => $currency['code'],
+      '@symbol' => $currency['symbol'],
+      '!name' => $currency['name'],
+    ));
+
+    if (!empty($currency['symbol'])) {
+      $options[$currency_code] .= ' - ' . check_plain($currency['symbol']);
+    }
+  }
+
+  $form['commerce_default_currency'] = array(
+    '#type' => 'select',
+    '#title' => t('Default store currency'),
+    '#description' => t('The default store currency will be used as the default for all price fields.'),
+    '#options' => $options,
+    '#default_value' => commerce_default_currency(),
+  );
+
+  $form['commerce_cart_expiration_time'] = array(
+    '#title' => t('Cart expiration time'),
+    '#type' => 'rules_duration',
+    '#default_value' => variable_get('roomify_cart_expiration_time', 3600),
+    '#description' => t('Set the time after the carts will expire.'),
+  );
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+
+  return $form;
+}
+
+/**
+ * Submit function for the roomify_system_commerce_settings_form form.
+ */
+function roomify_system_commerce_settings_form_submit($form, &$form_state) {
+  variable_set('roomify_cart_expiration_time', $form_state['values']['commerce_cart_expiration_time']);
+
+  if ($form_state['values']['commerce_default_currency'] != commerce_default_currency()) {
+    $new_default_currency = $form_state['values']['commerce_default_currency'];
+
+    variable_set('commerce_default_currency', $new_default_currency);
+    variable_set('commerce_enabled_currencies', array($new_default_currency => $new_default_currency));
+
+    $operations = array();
+    $operations[] = array(
+      'roomify_system_form_commerce_currency_settings_rate_operation',
+      array($new_default_currency),
+    );
+    $operations[] = array(
+      'roomify_system_form_commerce_currency_settings_type_operation',
+      array($new_default_currency),
+    );
+    $operations[] = array(
+      'roomify_system_form_commerce_currency_settings_product_operation',
+      array($new_default_currency),
+    );
+
+    $batch = array(
+      'operations' => $operations,
+    );
+    batch_set($batch);
+  }
+
+  drupal_set_message(t('The configuration options have been saved.'));
+}
+
+/**
+ * Change Currency on Rates.
+ */
+function roomify_system_form_commerce_currency_settings_rate_operation($new_default_currency, &$context) {
+  foreach (roomify_rate_load_multiple(FALSE, array('type' => 'standard')) as $rate) {
+    $rate->rate_default_rate[LANGUAGE_NONE][0]['currency_code'] = $new_default_currency;
+    $rate->save();
+  }
+}
+
+/**
+ * Change Currency on Types.
+ */
+function roomify_system_form_commerce_currency_settings_type_operation($new_default_currency, &$context) {
+  foreach (bat_type_load_multiple(FALSE, array('type' => array('home', 'room'))) as $type) {
+    $type->field_st_default_price[LANGUAGE_NONE][0]['currency_code'] = $new_default_currency;
+    $type->save();
+  }
+}
+
+/**
+ * Change Currency on Products.
+ */
+function roomify_system_form_commerce_currency_settings_product_operation($new_default_currency, &$context) {
+  foreach (entity_load('commerce_product', FALSE, array(), FALSE) as $product) {
+    $product->commerce_price[LANGUAGE_NONE][0]['currency_code'] = $new_default_currency;
+    commerce_product_save($product);
+  }
+}
+
+/**
+ * Implements hook_default_rules_configuration_alter().
+ */
+function roomify_system_default_rules_configuration_alter(&$configs) {
+  if (isset($configs['commerce_cart_expiration_delete_expired_carts'])) {
+    foreach ($configs['commerce_cart_expiration_delete_expired_carts']->actions() as $action) {
+      if ($action->getElementName() == 'commerce_cart_expiration_delete_orders') {
+        $action->settings['interval'] = variable_get('roomify_cart_expiration_time', 3600);
+      }
+    }
+  }
+
+  if (isset($configs['commerce_cart_add_to_cart_message'])) {
+    $configs['commerce_cart_add_to_cart_message']->active = FALSE;
+  }
+}
+
+/**
+ * Availability Search settings form.
+ */
+function roomify_system_availability_search_settings_form($form, &$form_state) {
+  $options = array(
+    'area' => t('Area'),
+    'area_type' => t('Area Type'),
+  );
+
+  $form['container_location'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Location Filter'),
+    '#description' => t('Choose either a filter based on the Areas or the Area Types'),
+  );
+  $form['container_location']['roomify_availability_search_form_location'] = array(
+    '#type' => 'radios',
+    '#options' => $options,
+    '#default_value' => variable_get('roomify_availability_search_form_location', 'area'),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function roomify_system_form_popup_message_settings_alter(&$form, &$form_state) {
+  $theme_path = drupal_get_path('theme', variable_get('theme_default', NULL));
+
+  $popup_message_style_path = $theme_path . '/popup_message_styles/default/popup.css';
+
+  $form['popup_message_fieldset']['popup_message_style']['#prefix'] = '<div style="display: none;">';
+  $form['popup_message_fieldset']['popup_message_style']['#suffix'] = '</div>';
+
+  if (in_array($popup_message_style_path, $form['popup_message_fieldset']['popup_message_style']['#options'])) {
+    $form['popup_message_fieldset']['popup_message_style']['#default_value'] = $popup_message_style_path;
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function roomify_system_form_bat_type_edit_form_alter(&$form, &$form_state) {
+  global $user;
+
+  $type = $form['#entity'];
+
+  $form['options']['#access'] = FALSE;
+
+  if (!(isset($type->is_new) && $type->is_new)) {
+    if (user_access('unpublish any type') || (user_access('unpublish own type') && $type->uid == $user->uid)) {
+      if ($type->status) {
+        $form['actions']['suspend'] = array(
+          '#type' => 'submit',
+          '#value' => t('Suspend Type'),
+          '#suffix' => l(t('Cancel'), 'admin/bat/config/types'),
+          '#submit' => array('roomify_system_form_bat_type_edit_form_suspend'),
+        );
+      }
+      else {
+        $form['actions']['activate'] = array(
+          '#type' => 'submit',
+          '#value' => t('Activate Type'),
+          '#suffix' => l(t('Cancel'), 'admin/bat/config/types'),
+          '#submit' => array('roomify_system_form_bat_type_edit_form_activate'),
+        );
+      }
+
+      unset($form['actions']['delete']['#suffix']);
+      $form['actions']['delete']['#attributes'] = array('style' => 'float: right;');
+    }
+  }
+
+  if ($type->status == 0) {
+    $form['unpublished'] = array(
+      '#markup' => '<div style="color: #FF4500; font-size: 20px; float: right;">' . t('Type suspend') . '</div>',
+      '#weight' => -100,
+    );
+  }
+}
+
+/**
+ * Suspend Type.
+ */
+function roomify_system_form_bat_type_edit_form_suspend($form, &$form_state) {
+  $form_state['bat_type']->status = 0;
+  $form_state['bat_type']->save();
+}
+
+/**
+ * Activate Type.
+ */
+function roomify_system_form_bat_type_edit_form_activate($form, &$form_state) {
+  $form_state['bat_type']->status = 1;
+  $form_state['bat_type']->save();
+}
+
+/**
+ * Get a list of 'Landing pages' and 'Property pages'.
+ */
+function roomify_system_get_homepage_options() {
+  $options = array();
+
+  $nodes = node_load_multiple(FALSE, array('type' => array('landing_page', 'homepage')));
+  $properties = roomify_property_load_multiple(FALSE);
+
+  foreach ($nodes as $node) {
+    $path = drupal_get_path_alias('node/' . $node->nid);
+    $options[$path] = t('Page') . ': ' . $node->title;
+  }
+
+  foreach ($properties as $property) {
+    if ($property->type == 'casa_property' || $property->type == 'locanda_property') {
+      $path = drupal_get_path_alias('listing/' . $property->property_id);
+      $options[$path] = t('Property') . ': ' . $property->name;
+    }
+    else {
+      $path = drupal_get_path_alias('activity/' . $property->property_id);
+      $options[$path] = t('Activity') . ': ' . $property->name;
+    }
+  }
+
+  return $options;
+}
+
+/**
+ * Return filesystem to use.
+ */
+function roomify_system_file_dir() {
+  if (module_exists('s3fs') && variable_get('s3fs_bucket', NULL)) {
+    return 's3://';
+  }
+  return 'public://';
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function roomify_system_form_user_profile_form_alter(&$form, &$form_state) {
+  global $user;
+
+  // A manager can't update his role.
+  if (strpos(current_path(), 'user/' . $user->uid . '/edit') === 0 &&
+      !(in_array('administrator', $user->roles) || $user->uid == 1)) {
+    $form['account']['status']['#access'] = FALSE;
+    $form['account']['roles_change']['#access'] = FALSE;
+  }
+
+  $pass_reset = isset($_SESSION['pass_reset_' . $user->uid]) && isset($_GET['pass-reset-token']) && ($_GET['pass-reset-token'] == $_SESSION['pass_reset_' . $user->uid]);
+  if ($pass_reset) {
+    $_GET['destination'] = 'user#tabs-0-middle-1';
+  }
+}
+
+/**
+ * Implements hook_panels_panels_pre_render().
+ * Add the Translate link to the dashboard.
+ */
+function roomify_system_panels_pre_render($panels_display, $renderer) {
+  if ($panels_display->css_id == 'mini-panel-dashboard_manage_configuration') {
+    foreach ($panels_display->content as $key => $pane) {
+      if ($pane->type == 'manage_global_addons') {
+        $pane->access['plugins'][1]['name'] = 'php';
+        $pane->access['plugins'][1]['settings']['php'] = 'return module_exists("roomify_global_addons");';
+        $pane->access['plugins'][1]['settings']['description'] = 'Global Addons Enabled';
+        $pane->access['plugins'][1]['not'] = FALSE;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_mail for module_name.
+ */
+function roomify_system_mail($key, &$message, $params) {
+  switch ($key) {
+    case 'roomify_update_pets':
+      $message['subject'] = $params['subject'];
+      $message['body'][] = $params['body'];
+      break;
+  }
+}
+
+/**
+ * Implements hook_mail_alter().
+ */
+function roomify_system_mail_alter(&$message) {
+  // Override system emails with PET templates.
+  if (module_exists('pet')) {
+    switch ($message['id']) {
+      case 'user_register_admin_created':
+        $new_user_account_message = pet_load_multiple(FALSE, array('name' => 'new_user_account_message'));
+        if (count($new_user_account_message)) {
+          $pet = current($new_user_account_message);
+          $account = $message['params']['account'];
+          $body = token_replace($pet->mail_body, array('user' => $account), array('callback' => 'user_mail_tokens', 'sanitize' => FALSE));
+          $message['body'] = $body;
+        }
+        break;
+
+      case 'user_password_reset':
+        $password_reset = pet_load_multiple(FALSE, array('name' => 'password_reset'));
+        if (count($password_reset)) {
+          $pet = current($password_reset);
+          $account = $message['params']['account'];
+          $body = token_replace($pet->mail_body, array('user' => $account), array('callback' => 'user_mail_tokens', 'sanitize' => FALSE));
+          $message['body'] = $body;
+        }
+        break;
+    }
+  }
+}
+
+/**
+ * Implements hook_menu_alter().
+ */
+function roomify_system_menu_alter(&$items) {
+  $items['admin/structure/menu/manage/%menu/edit']['access callback'][] = '_menu_edit_role_check';
+
+  $items['user/%user/orders/%commerce_order']['title callback'] = 'roomify_system_order_title';
+
+  $items['user/%user/orders/%commerce_order']['page callback'] = 'roomify_system_order_view';
+  // This is required until issue https://www.drupal.org/node/2078423.
+  // in Redirect module will be fixed.
+  $items['admin/config/search/redirect/settings']['access callback'] = '_roomify_system_administrators_only_access_callback';
+
+  $items['admin/bat/orders/%pm_arg/view']['access callback'] = '_roomify_system_commerce_order_view_access_pm';
+  // Custom page for Commerce Orders.
+  $items['admin/commerce/orders/%commerce_order']['page callback'] = 'roomify_system_order_view';
+  $items['admin/commerce/orders/%commerce_order']['access callback'] = '_roomify_system_commerce_order_view_access';
+
+  $items['admin/config/spam_protection/google_recaptcha']['access arguments'] = array('configure recaptcha');
+  $items['admin/config/spam_protection']['access arguments'] = array('configure recaptcha');
+  $items['admin/config/spam_protection/google_recaptcha/keys']['access arguments'] = array('configure recaptcha');
+  $items['admin/config/spam_protection/google_recaptcha/forms']['access arguments'] = array('configure recaptcha');
+  $items['admin/config/search/path/patterns']['access arguments'] = array('administer pathauto patterns');
+}
+
+/**
+ * A link to our custom page.
+ */
+function roomify_system_order_view($order, $view_mode = 'administrator') {
+  drupal_goto('/admin/bat/orders/' . $order->order_id . '/view');
+}
+
+/**
+ * Restrict access to administrators.
+ */
+function _roomify_system_administrators_only_access_callback() {
+  global $user;
+
+  // Forbid access for roles different than administrator.
+  return (in_array('administrator', array_values($user->roles))) ? TRUE : FALSE;
+}
+
+/**
+ *
+ */
+function roomify_system_order_title($order) {
+  return t('Booking');
+}
+
+/**
+ *
+ */
+function _menu_edit_role_check() {
+  global $user;
+
+  if ($user->uid != 1 || !in_array('administrator', $user->roles)) {
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/**
+ * Implements hook_commerce_entity_access_condition_commerce_order_alter().
+ *
+ * Allow the current user to view the order if they are the owner of the unit
+ * that the order's booking is for.
+ */
+function roomify_system_commerce_entity_access_condition_commerce_order_alter(&$conditions, $context) {
+  $order = FALSE;
+
+  if (isset($context['entity'])) {
+    $order = $context['entity'];
+  }
+  else {
+    $current_path = current_path();
+    if (strpos($current_path, 'admin/commerce/orders/') === 0) {
+      $order_id = arg(3);
+      $order = commerce_order_load($order_id);
+    }
+  }
+
+  if ($order !== FALSE) {
+    $wrapper = entity_metadata_wrapper('commerce_order', $order);
+    // See if there are any product line items.
+    if (commerce_line_items_quantity($wrapper->commerce_line_items, commerce_product_line_item_types()) > 0) {
+      // Get the unit IDs already in the cart.
+      foreach ($wrapper->commerce_line_items as $line_item) {
+        // There are some line_item types as: coupon, fee, etc. that don't
+        // have a referenced commerce_product.
+        if (in_array($line_item->type->value(), commerce_product_line_item_types())) {
+
+          // Need to check if commerce_product_type = 'roomify_accommodation_product'.
+          if ($line_item->commerce_product->value()->type == 'roomify_accommodation_product') {
+            if ($line_item->__isset('commerce_booking_reference') &&
+                $line_item->commerce_booking_reference->__isset('booking_event_reference')) {
+              $type = bat_type_load($line_item->commerce_booking_reference->booking_event_reference->event_bat_unit_reference->type_id->value());
+
+              // If the order's booking's type's author is equal to the current
+              // user, grant view access to this order.
+              if ($type->uid == $context['account']->uid || user_access('update any bat_booking entity')) {
+                // Add a generic condition that will satisfy the query to grant
+                // access.
+                $conditions->condition($context['base_table'] . '.type', 'commerce_order');
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_field_widget_form_alter().
+ */
+function roomify_system_field_widget_form_alter(&$element, &$form_state, $context) {
+  // Fields to edit.
+  $fields = array('field_cta_gallery', 'field_st_gallery', 'field_sp_gallery');
+  if (in_array($context['field']['field_name'], $fields)) {
+    // Loop through the element children (there will always be at least one).
+    foreach (element_children($element) as $key => $child) {
+      // Add the new process function to the element.
+      $element[$key]['#process'][] = 'roomify_system_image_field_widget_process';
+    }
+  }
+}
+
+/**
+ * Callback - process gallery image fields.
+ */
+function roomify_system_image_field_widget_process($element, &$form_state, $form) {
+  // Change the title field label and description.
+  if ($element['title']['#access']) {
+    $element['title']['#title'] = 'Image Title';
+    $element['title']['#prefix'] = '<div class="property-gallery-text">';
+    $element['title']['#suffix'] = '</div>';
+  }
+
+  if ($element['alt']['#access']) {
+    $element['alt']['#prefix'] = '<div class="property-gallery-text">';
+    $element['alt']['#suffix'] = '</div>';
+    $element['alt']['#title'] = 'Image Description';
+  }
+
+  if ($element['fid']['#value'] && ($element['title']['#access'] || $element['alt']['#access'])) {
+    $element['roomify_image_alt_title'] = array(
+      '#type' => 'markup',
+      '#markup' => '<div class="property-gallery-show-text">' . t('Title and Description') . '</div>',
+    );
+  }
+
+  // Return the altered element.
+  return $element;
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function roomify_system_form_commerce_checkout_form_complete_alter(&$form, &$form_state) {
+  drupal_set_title(t('Checkout Complete - Thank you for your reservation'));
+}
+
+/**
+ * Implements hook_form_user_pass_reset_alter().
+ */
+function roomify_system_form_user_pass_reset_alter(&$form, &$form_state) {
+  if (isset($_SESSION['messages']['status']) && is_array($_SESSION['messages']['status'])) {
+    unset($_SESSION['messages']['status']);
+  }
+}
+
+/**
+ * Implements hook_menu_local_tasks_alter().
+ */
+function roomify_system_menu_local_tasks_alter(&$data, $router_item, $root_path) {
+  if (!empty($data['tabs'])) {
+    global $user;
+
+    $paths = array(
+      0 => 'user/%/edit',
+      1 => 'user/%/devel',
+    );
+
+    if (in_array($root_path, $paths)) {
+      foreach ($data['tabs'][0]['output'] as $id => $content) {
+        // Hide Orders tab.
+        if ($content['#link']['path'] == 'user/%/orders') {
+          unset($data['tabs'][0]['output'][$id]);
+        }
+        // Rename View tab.
+        if ($content['#link']['path'] == 'user/%/view') {
+          $data['tabs'][0]['output'][$id]['#link']['href'] = 'user';
+          $data['tabs'][0]['output'][$id]['#link']['title'] = t('Dashboard');
+        }
+      }
+    }
+
+    if (isset($data['tabs'][1])) {
+      if ($user->uid != 1 && !in_array('administrator', $user->roles)) {
+        unset($data['tabs'][1]);
+      }
+    }
+  }
+  // Add an action link to the order edit page from the user order page.
+  if ($root_path == 'admin/bat/orders/%/view') {
+    // Extract the order ID from the current router item and fetch the admin
+    // update menu item.
+    $order_id = $router_item['original_map'][3];
+    $item = menu_get_item('admin/commerce/orders/' . $order_id . '/edit');
+
+    if ($item['access']) {
+      // Override the title.
+      $item['title'] = t('Edit this order');
+      $data['actions']['output'][] = array(
+        '#theme' => 'menu_local_action',
+        '#link' => $item,
+      );
+    }
+  }
+}
+
+/**
+ * Implements hook_views_query_alter().
+ */
+function roomify_system_views_query_alter(&$view, &$query) {
+  if ($view->name == 'users' && $view->current_display == 'references_dialog_1') {
+    global $user;
+    // Let's filter the view and show only subusers if the current
+    // user is a Property Owner but not a Roomify Manager.
+    if (in_array('property owner', $user->roles) && !in_array('roomify manager', $user->roles)) {
+      if (module_exists('subuser')) {
+        $suids = subuser_load_all($user);
+        if (!empty($suids)) {
+          foreach ($suids as $suid) {
+            // Add a filter for this uid.
+            $conditions[] = array(
+              'field' => 'users.uid',
+              'value' => $suid,
+              'operator' => '=',
+            );
+          }
+          $view->query->where[] = array(
+            'args' => array(),
+            'type' => 'OR',
+            'conditions' => $conditions,
+          );
+        }
+        // No subusers, the list will show only the user himself.
+        else {
+          $conditions[] = array(
+            'field' => 'users.uid',
+            'value' => $user->uid,
+            'operator' => '=',
+          );
+          $view->query->where[] = array(
+            'args' => array(),
+            'type' => 'OR',
+            'conditions' => $conditions,
+          );
+        }
+      }
+    }
+  }
+
+  if ($view->name == 'property' && $view->current_display == 'panel_pane_1') {
+    if ($property = roomify_property_load($view->args[0])) {
+      global $language_content;
+
+      if (isset($property->translations->data[$language_content->language])) {
+        $current_language = $language_content->language;
+      }
+      else {
+        $current_language = $property->language;
+      }
+
+      $query->where[0]['conditions'][1]['value'][':field_data_field_sp_gallery_field_sp_gallery'] = array($current_language);
+      $query->where[0]['conditions'][2]['value'][':field_data_field_sp_gallery_field_sp_gallery1'] = array($current_language);
+    }
+  }
+
+  if ($view->name == 'property_slideshow' && ($view->current_display == 'panel_pane_1' || $view->current_display == 'panel_pane_2')) {
+    if ($property = roomify_property_load($view->args[0])) {
+      global $language_content;
+
+      if (isset($property->translations->data[$language_content->language])) {
+        $current_language = $language_content->language;
+      }
+      else {
+        $current_language = $property->language;
+      }
+
+      $query->where[0]['conditions'][1]['value'][key($query->where[0]['conditions'][1]['value'])] = array($current_language);
+      $query->where[0]['conditions'][2]['value'][key($query->where[0]['conditions'][2]['value'])] = array($current_language);
+      $query->where[0]['conditions'][3]['value'][key($query->where[0]['conditions'][3]['value'])] = array($current_language);
+    }
+  }
+
+  if ($view->name == 'types' && $view->current_display == 'panel_pane_1') {
+    if ($type = bat_type_load($view->args[0])) {
+      global $language_content;
+
+      if (isset($type->translations->data[$language_content->language])) {
+        $current_language = $language_content->language;
+      }
+      else {
+        $current_language = $type->language;
+      }
+      $query->where[0]['conditions'][1]['value'][':field_data_field_st_gallery_field_st_gallery'] = array($current_language);
+      $query->where[0]['conditions'][2]['value'][':field_data_field_st_gallery_field_st_gallery1'] = array($current_language);
+    }
+  }
+}
+
+/**
+ * Implements hook_field_create_instance().
+ */
+function roomify_system_field_create_instance($instance) {
+  $instance_info = field_info_instance($instance['entity_type'], $instance['field_name'], $instance['bundle']);
+
+  if ($instance_info['field_name'] == 'bat_constraints_range') {
+    $instance_info['label'] = 'Booking Constraints';
+    field_update_instance($instance_info);
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ */
+function roomify_system_form_menu_edit_item_alter(&$form, &$form_state) {
+  $form['expanded']['#default_value'] = 1;
+  $form['expanded']['#access'] = FALSE;
+}
+
+/**
+ * Get line item label.
+ *
+ * @param $type
+ * @param $property
+ * @param DateTime $start_date
+ * @param DateTime $end_date
+ * @param int $nights
+ *
+ * @return string
+ */
+function roomify_system_get_line_item_label($type, $property, $start_date, $end_date, $nights) {
+  $date_format = variable_get('bat_daily_date_format', 'Y-m-d');
+
+  if ($type->type == 'room') {
+    $line_item_label = t('@property_name - @type_name from @start_date to @end_date, @nights nights', array(
+      '@property_name' => $property->name,
+      '@type_name' => $type->name,
+      '@start_date' => $start_date->format($date_format),
+      '@end_date' => $end_date->format($date_format),
+      '@nights' => $nights,
+    ));
+  }
+  else {
+    $line_item_label = t('@property_name from @start_date to @end_date, @nights nights', array(
+      '@property_name' => $property->name,
+      '@start_date' => $start_date->format($date_format),
+      '@end_date' => $end_date->format($date_format),
+      '@nights' => $nights,
+    ));
+  }
+
+  return $line_item_label;
+}
+
+/**
+ * Helper function that generates a new color which is either
+ * lighter or darker of a given one.
+ */
+function roomify_system_adjust_brightness($hex, $steps) {
+  // Steps should be between -255 and 255. Use a negative number for darker
+  // color and a positive for a lighter one.
+  $steps = max(-255, min(255, $steps));
+
+  // Normalize into a six character long hex string.
+  $hex = str_replace('#', '', $hex);
+  if (strlen($hex) == 3) {
+    $hex = str_repeat(substr($hex, 0, 1), 2) . str_repeat(substr($hex, 1, 1), 2) . str_repeat(substr($hex, 2, 1), 2);
+  }
+
+  // Split into three parts: R, G and B.
+  $color_parts = str_split($hex, 2);
+  $return = '#';
+
+  foreach ($color_parts as $color) {
+    // Convert to decimal.
+    $color = hexdec($color);
+    // Adjust color.
+    $color = max(0, min(255, $color + $steps));
+    // Make two char hex code.
+    $return .= str_pad(dechex($color), 2, '0', STR_PAD_LEFT);
+  }
+
+  return $return;
+}
+
+/**
+ * Implements hook_form_alter().
+ */
+function roomify_system_form_alter(&$form, &$form_state, $form_id) {
+  // Remove preview from nodes.
+  if (isset($form['#node_edit_form']) && $form['#node_edit_form']) {
+    if (isset($form['actions']['preview'])) {
+      unset($form['actions']['preview']);
+    }
+    if (isset($form['actions']['preview_changes'])) {
+      unset($form['actions']['preview_changes']);
+    }
+  }
+  if ($form_id == 'user_profile_form' || $form_id == 'user_register_form') {
+    if (isset($form['redirect'])) {
+      $form['redirect']['#access'] = FALSE;
+    }
+    if (isset($form['metatags'])) {
+      $form['metatags']['#access'] = FALSE;
+    }
+  }
+  if (isset($form['redirect'])) {
+    if ($form['redirect']['#type'] == 'fieldset') {
+      $form['redirect']['#group'] = 'additional_settings';
+    }
+  }
+  if ($form_id == 'g_forms') {
+    $form['#validate'][] = 'check_google_recaptcha_keys';
+  }
+}
+
+/**
+ * Check if keys are set.
+ */
+function check_google_recaptcha_keys($form, &$form_state) {
+  $settings = variable_get('google_recaptcha', array());
+  // Google recaptcha is not set.
+  if (empty($settings['public_key']) || empty($settings['secret_key'])) {
+    $values = array_filter($form_state['values']['available_forms']);
+    if (!empty($values)) {
+      // User should not protect forms if keys are not set.
+      foreach ($form_state['values']['available_forms'] as $key => $value) {
+        $form_state['values']['available_forms'][$key] = 0;
+      }
+      drupal_set_message(t('It seems that your Google reCAPTCHA keys are not set. Click on the "Keys and Settings" tab and set those before protecting forms.'), 'warning');
+    }
+  }
+}
+
+/**
+ * Implements hook_token_info().
+ */
+function roomify_system_token_info() {
+  $info['tokens']['site']['abs-url'] = array(
+    'name' => t('Site Absolute Url'),
+    'description' => t('Url of the site, no language prefix garanted'),
+  );
+  $info['tokens']['roomify_property']['property-details'] = array(
+    'name' => t('Roomify Property Details'),
+    'description' => t('Property Details such as directions or guidelines'),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_tokens().
+ */
+function roomify_system_tokens($type, $tokens, array $data = array(), array $options = array()) {
+  $replacements = array();
+  global $base_root;
+
+  if ($type == 'site') {
+
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'abs-url':
+          $replacements[$original] = $base_root;
+          break;
+      }
+    }
+  }
+  if ($type == 'roomify_property') {
+    $details = '';
+    if ($property_details = field_get_items('roomify_property', $data['roomify_property'], 'field_sp_property_details')) {
+      $details = $property_details[0]['value'];
+      if (!empty($property_details[0]['value'])) {
+        $details = '<strong>' . t('Property Details') . ':</strong> ' . $property_details[0]['value'];
+      }
+    }
+    if (isset($data['bat_type'])) {
+      if ($type_details = field_get_items('bat_type', $data['bat_type'], 'field_st_details')) {
+        if (!empty($type_details[0]['value'])) {
+          $details = '<strong>' . t('Room Details') . ':</strong> ' . $type_details[0]['value'];
+        }
+      }
+    }
+
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'property-details':
+          $replacements[$original] = $details;
+          break;
+      }
+    }
+  }
+
+  return $replacements;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function roomify_system_theme() {
+  return array(
+    'roomify_image_thumb_upload' => array(
+      'render element' => 'element',
+      'file' => 'roomify_system.module',
+    ),
+    'better_messages' => array(
+      'template'  => 'roomify_better_messages',
+      'variables' => array('content' => NULL),
+    ),
+  );
+}
+
+/**
+ * Return all users who have the given role.
+ *
+ * @param int|string $role
+ *   Name of the role or the ID or the role.
+ * @param bool|TRUE $active_user
+ *   Determine, if only the active users should be returned.
+ * @return array
+ *   Array of user objects.
+ */
+function roomify_system_get_users_with_role($role, $active_user = TRUE) {
+  $users = array();
+  $rid = 0;
+  if (is_int($role)) {
+    $rid = $role;
+  }
+  else {
+    if ($role_obj = user_role_load_by_name($role)) {
+      $rid = $role_obj->rid;
+    }
+  }
+  if ($rid) {
+    $uids = db_select('users_roles', 'ur')
+      ->fields('ur', array('uid'))
+      ->condition('ur.rid', $rid)
+      ->execute()->fetchCol();
+    if (!empty($uids)) {
+      $query = new EntityFieldQuery();
+      $query->entityCondition('entity_type', 'user')
+        ->propertyCondition('uid', $uids, 'IN');
+      if ($active_user) {
+        $query->propertyCondition('status', 1);
+      }
+      $entities = $query->execute();
+      if (!empty($entities)) {
+        $users = user_load_multiple(array_keys($entities['user']));
+      }
+    }
+  }
+
+  return $users;
+}
+
+/**
+ * Implements hook_google_recaptcha_available_forms_alter().
+ */
+function roomify_system_google_recaptcha_available_forms_alter(&$available_forms) {
+  $available_forms['contact_entityform_edit_form'] = 'Contact form';
+}
+
+/**
+ * Implements hook_google_recaptcha_always_protect_alter().
+ */
+function roomify_system_google_recaptcha_always_protect_alter(&$always_protected) {
+  $always_protected = array();
+}
+
+/**
+ * AddToAny settings form.
+ */
+function roomify_system_addtoany_settings_form($form, &$form_state) {
+  $form['roomify_addtoany_settings'] = array(
+    '#type' => 'checkboxes',
+    '#title' => t('Enable AddToAny'),
+    '#description' => t('Define in which pages the social sharing buttons should be shown.'),
+    '#options' => array(
+      'property' => t('Property'),
+      'type' => t('Type'),
+      'blog' => t('Blog'),
+      'activity' => t('Things to do'),
+    ),
+    '#default_value' => variable_get('roomify_addtoany_settings', array('property' => 'property', 'type' => 'type', 'blog' => 'blog', 'activity' => 'activity')),
+  );
+
+  return system_settings_form($form);
+}
+
+/**
+ * Implements hook_xmlsitemap_link_alter().
+ */
+function roomify_system_xmlsitemap_link_alter(&$link) {
+  if ($link['type'] == 'taxonomy_term') {
+    $link['lastmod'] = time() - 3600 * rand(1, 12);
+    $link['changefreq'] = XMLSITEMAP_FREQUENCY_WEEKLY;
+  }
+  if ($link['type'] == 'menu_link') {
+    $link['lastmod'] = time() - 3600 * rand(1, 12);
+    $link['changefreq'] = XMLSITEMAP_FREQUENCY_DAILY;
+  }
+  if ($link['type'] == 'roomify_property') {
+    if (!isset($link['changefreq']) || empty($link['changefreq'])) {
+      $link['changefreq'] = XMLSITEMAP_FREQUENCY_WEEKLY;
+    }
+  }
+}

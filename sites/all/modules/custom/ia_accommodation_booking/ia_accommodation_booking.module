@@ -1,0 +1,10 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: yunior
+ * Date: 8/7/2018
+ * Time: 5:29 PM
+ */
+
+module_load_include('inc', 'ia_accommodation_booking',  'includes/ia_accommodation_booking.ajax_cart');
+

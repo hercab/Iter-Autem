@@ -1,0 +1,408 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_entity_info().
+ */
+function roomify_channel_map_entity_info() {
+  $return['roomify_channel_map'] = array(
+    'label' => t('Roomify ChannelMap'),
+    // The entity class and controller class extend the classes provided by the
+    // Entity API.
+    'entity class' => 'RoomifyChannelMap',
+    'controller class' => 'RoomifyChannelMapController',
+    'base table' => 'roomify_channel_maps',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'channel_map_id',
+      'bundle' => 'type',
+      'label' => 'name',
+    ),
+    // Bundles are defined by the channel_map bundles below.
+    'bundles' => array(),
+    // Bundle keys tell the FieldAPI how to extract information from the bundle
+    // objects.
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'creation callback' => 'roomify_channel_map_create',
+    'access callback' => 'roomify_channel_map_access',
+    'access arguments' => array(
+      'user key' => 'uid',
+      'access tag' => 'roomify_channel_map_access',
+    ),
+    'permission labels' => array(
+      'singular' => t('channel_map'),
+      'plural' => t('channel_maps'),
+    ),
+    'module' => 'roomify_channel_map',
+    // The information below is used by the RoomifyChannelMapUIController (which extends
+    // the EntityDefaultUIController).
+    'admin ui' => array(
+      'path' => 'admin/bat/config/channel_map',
+      'file' => 'roomify_channel_map.admin.inc',
+      'controller class' => 'RoomifyChannelMapUIController',
+      'menu wildcard' => '%roomify_channel_map',
+    ),
+  );
+
+  $return['roomify_channel_map_type'] = array(
+    'label' => t('Roomify ChannelMap Type'),
+    'entity class' => 'RoomifyChannelMapType',
+    'controller class' => 'RoomifyChannelMapTypeController',
+    'base table' => 'roomify_channel_map_types',
+    'fieldable' => TRUE,
+    'bundle of' => 'roomify_channel_map',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'access callback' => 'roomify_channel_map_type_access',
+    'module' => 'roomify_channel_map',
+    // Enable the entity API's admin UI.
+    'admin ui' => array(
+      'path' => 'admin/bat/config/channel-map-types',
+      'file' => 'roomify_channel_map_type.admin.inc',
+      'controller class' => 'RoomifyChannelMapTypeUIController',
+    ),
+  );
+
+  return $return;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ *
+ * We are adding the info about the channel map types via a hook to avoid a recursion
+ * issue as loading the room types requires the entity info as well.
+ */
+function roomify_channel_map_entity_info_alter(&$entity_info) {
+  foreach (roomify_channel_map_get_types() as $type => $info) {
+    $entity_info['roomify_channel_map']['bundles'][$type] = array(
+      'label' => $info->label,
+      'admin' => array(
+        'path' => 'admin/bat/config/channel-map-types/manage/%roomify_channel_map_type',
+        'real path' => 'admin/bat/config/channel-map-types/manage/' . $type,
+        'bundle argument' => 5,
+        'access arguments' => array('bypass roomify_channel_map entities access'),
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function roomify_channel_map_permission() {
+  $permissions = array();
+
+  // Permission for Roomify ChannelMap Types.
+  $permissions += array(
+    'administer roomify_channel_map_type entities' => array(
+      'title' => t('Administer channel map types'),
+      'description' => t('Allows users to add channel map types and configure their fields.'),
+      'restrict access' => TRUE,
+    ),
+  );
+
+  $permissions += bat_entity_access_permissions('roomify_channel_map');
+
+  return $permissions;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function roomify_channel_map_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'roomify_channel_map') . '/views',
+  );
+}
+
+/**
+ * Determines whether the given user has access to a channel map.
+ *
+ * @param string $op
+ *   The operation being performed. One of 'view', 'update', 'create', 'delete'
+ *   or just 'edit' (being the same as 'create' or 'update').
+ * @param RoomifyChannelMap $channel_map
+ *   Optionally a channel map to check access for. If nothing is
+ *   given, access for all channel maps is determined.
+ * @param object $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ *
+ * @return boolean
+ *   Whether access is allowed or not.
+ */
+function roomify_channel_map_access($op, $channel_map = NULL, $account = NULL) {
+  return bat_entity_access($op, $channel_map, $account, 'roomify_channel_map');
+}
+
+/**
+ * Access callback: Checks whether the user has permission to add a channel map.
+ *
+ * @return bool
+ *   TRUE if the user has add permission, otherwise FALSE.
+ */
+function roomify_channel_map_add_access() {
+  if (user_access('administer roomify_channel_map_type entities')) {
+    return TRUE;
+  }
+
+  $bundles = roomify_channel_map_get_types();
+  foreach ($bundles as $bundle) {
+    if (roomify_channel_map_access('create', roomify_channel_map_create(array('type' => $bundle->type, 'uid' => 0)))) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * The class used for channel map entities
+ */
+class RoomifyChannelMap extends Entity {
+
+  public function __construct($values = array()) {
+    parent::__construct($values, 'roomify_channel_map');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function defaultLabel() {
+    return $this->name;
+  }
+
+}
+
+/**
+ * The class used for channel map type entities
+ */
+class RoomifyChannelMapType extends Entity {
+
+  /**
+   * The channel map type.
+   *
+   * @var string
+   */
+  public $type;
+
+  /**
+   * The channel map type label.
+   *
+   * @var string
+   */
+  public $label;
+
+  /**
+   *
+   */
+  public function __construct($values = array()) {
+    parent::__construct($values, 'roomify_channel_map_type');
+  }
+
+}
+
+/**
+ * The Controller for RoomifyChannelMap entities
+ */
+class RoomifyChannelMapController extends EntityAPIController {
+
+  /**
+   *
+   */
+  public function __construct($entityType) {
+    parent::__construct($entityType);
+  }
+
+  /**
+   *
+   */
+  public function create(array $values = array()) {
+    $values += array(
+      'channel_map_id' => '',
+      'is_new' => TRUE,
+      'data' => '',
+      'name' => '',
+      'created' => '',
+    );
+
+    $channel_map = parent::create($values);
+
+    return $channel_map;
+  }
+
+  /**
+   * Overriding the buildContent function to add entity specific fields.
+   */
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+    $content = parent::buildContent($entity, $view_mode, $langcode, $content);
+
+    return $content;
+  }
+
+}
+
+/**
+ * The Controller for RoomifyChannelMapType entities
+ */
+class RoomifyChannelMapTypeController extends EntityAPIControllerExportable {
+
+  /**
+   *
+   */
+  public function __construct($entityType) {
+    parent::__construct($entityType);
+  }
+
+  /**
+   *
+   */
+  public function create(array $values = array()) {
+    $values += array(
+      'id' => '',
+      'is_new' => TRUE,
+      'data' => '',
+    );
+
+    $channel_map_type = parent::create($values);
+
+    return $channel_map_type;
+  }
+
+}
+
+function roomify_channel_map_type_access() {
+  return TRUE;
+}
+
+/**
+ * Create a channel map object.
+ */
+function roomify_channel_map_create($values = array()) {
+  return entity_get_controller('roomify_channel_map')->create($values);
+}
+
+/**
+ * Create a channel_map type object.
+ */
+function roomify_channel_map_type_create($values = array()) {
+  return entity_get_controller('roomify_channel_map_type')->create($values);
+}
+
+/**
+ * Menu argument loader; Load a channel map type by string.
+ *
+ * @param $type
+ *   The machine-readable name of a channel map type to load.
+ * @param bool $reset
+ *   A boolean indicating whether the internal cache should be reset.
+ *
+ * @return array|false
+ *   A channel map type array or FALSE if $type does not exist.
+ */
+function roomify_channel_map_type_load($type, $reset = FALSE) {
+  return roomify_channel_map_get_types($type, $reset);
+}
+
+/**
+ * Gets an array of all channel map types, keyed by the type name.
+ *
+ * @param string $type_name
+ *   If set, the type with the given name is returned.
+ * @param bool $reset
+ *   A boolean indicating that the internal cache should be reset.
+ *
+ * @return RoomifyChannelMapType[]
+ *   Depending whether $type isset, an array of channel_map types or a single one.
+ */
+function roomify_channel_map_get_types($type_name = NULL, $reset = FALSE) {
+  // entity_load() will get the Entity controller for our channel map type
+  // entity and call the load function of that object.
+  $types = entity_load_multiple_by_name('roomify_channel_map_type', isset($type_name) ? array($type_name) : FALSE);
+  return isset($type_name) ? reset($types) : $types;
+}
+
+/**
+ * Saves a channel map type to the db.
+ *
+ * @param RoomifyChannelMapType $channel_map_type
+ *   The channel_map type to save.
+ */
+function roomify_channel_map_type_save(RoomifyChannelMapType $channel_map_type) {
+  $channel_map_type->save();
+}
+
+/**
+ * Deletes a channel map type from the db.
+ */
+function roomify_channel_map_type_delete(RoomifyChannelMapType $bundle) {
+  $bundle->delete();
+}
+
+/**
+ * Fetches a channel map object.
+ *
+ * @param int $channel_map_id
+ *   Integer specifying the channel_map id.
+ * @param bool $reset
+ *   A boolean indicating whether the internal cache should be reset.
+ *
+ * @return RoomifyChannelMap|false
+ *   A fully-loaded $channel_map object or FALSE if it cannot be loaded.
+ *
+ * @see roomify_channel_map_load_multiple()
+ */
+function roomify_channel_map_load($channel_map_id, $reset = FALSE) {
+  $channel_maps = roomify_channel_map_load_multiple(array($channel_map_id), array(), $reset);
+  return reset($channel_maps);
+}
+
+/**
+ * Loads multiple channel maps based on certain conditions.
+ *
+ * @param array $channel_map_ids
+ *   An array of channel_map IDs.
+ * @param array $conditions
+ *   An array of conditions to match against the {roomify_channel_maps} table.
+ * @param bool $reset
+ *   A boolean indicating that the internal cache should be reset.
+ *
+ * @return array
+ *   An array of channel_map objects, indexed by channel_map_id.
+ *
+ * @see entity_load()
+ * @see roomify_channel_map_load()
+ */
+function roomify_channel_map_load_multiple($channel_map_ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('roomify_channel_map', $channel_map_ids, $conditions, $reset);
+}
+
+/**
+ * Deletes a channel map from the db.
+ */
+function roomify_channel_map_delete(RoomifyChannelMap $channel_map) {
+  $channel_map->delete();
+}
+
+/**
+ * Implements hook_theme().
+ */
+function roomify_channel_map_theme() {
+  return array(
+    'roomify_channel_map_add_list' => array(
+      'variables' => array('content' => array()),
+      'file' => 'roomify_channel_map.admin.inc',
+    ),
+  );
+}

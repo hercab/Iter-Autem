@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the ia_roomify_travel_theme feature.
+ */
+
+include_once 'ia_roomify_travel_theme.features.inc';

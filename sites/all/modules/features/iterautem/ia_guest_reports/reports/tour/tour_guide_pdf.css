@@ -1,0 +1,8 @@
+.clearfix{
+    display: none !important;
+}
+
+.property-details{
+    width: 30%;
+    display: none;
+}

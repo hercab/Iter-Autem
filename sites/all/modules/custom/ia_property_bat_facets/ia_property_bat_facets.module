@@ -1,0 +1,376 @@
+<?php
+
+/**
+ *
+ * Implements hook_form_FORM_ID_alter() function
+ */
+
+function ia_property_bat_facets_form_property_bat_facets_availability_alter(&$form, &$form_state)
+{
+
+
+    $params = drupal_get_query_parameters();
+
+    $room_options = array(
+        0 => t('All'),
+        1 => t('1 room'),
+    );
+
+    $max_number_room = variable_get('roomify_max_property_type_rooms', '30');
+
+    for ($i = 2; $i <= $max_number_room; $i++) {
+        $room_options[$i] = $i . t(' rooms');
+    }
+
+    $form['container']['rooms'] = array(
+        '#type' => 'select',
+        '#title' => t('Rooms'),
+        '#description' => '',
+        '#options' => $room_options,
+        '#default_value' => isset($params['number_rooms']) ? $params['number_rooms'] : 1,
+        '#weight' => 1,
+    );
+
+    $form['container']['submit']['#weight'] = 10;
+
+    $form['#attached']['css'] = array(
+        drupal_get_path('module', 'ia_property_bat_facets') . '/css/form_facets_availability.css',
+    );
+
+    $form['#validate'] = array('ia_property_bat_facets_availability_validate');
+
+    $form['#submit'] = array('ia_property_bat_facets_availability_submit');
+
+    return $form;
+
+}
+
+/*
+ * Funcion igual a property_bat_facets_availability_validate(),
+ * pero con el nuevo field para el numero de cuartos.
+*/
+
+function ia_property_bat_facets_availability_validate($form, &$form_state)
+{
+
+    if (!isset($form_state['values']['arrival']) && !isset($form_state['values']['departure'])) {
+        $group_size = $form_state['values']['group_size'];
+        $location = $form_state['values']['location'];
+
+        $number_rooms = $form_state['values']['rooms'];  // numero de cuartos
+
+        $segment = '';
+
+        if (variable_get('roomify_availability_search_form_location', 'area') == 'area_type') {
+            $segment_location = 'field_sp_area_type';
+        } else {
+            $segment_location = 'location';
+        }
+
+        if ($location) {
+            $area_term = taxonomy_term_load($location);
+            $location_filter = str_replace(' ', '-', $area_term->name);
+            $location_filter = str_replace("'", '', $location_filter);
+
+            $segment .= '/' . $segment_location . '/' . $location_filter;
+        }
+
+        /*if ($group_size && $number_rooms == 1) {
+            $max_group_size = variable_get('roomify_max_property_type_capacity', '100');
+            // Filter search from group_size to the maximum capacity of the biggest
+            // type in the site.
+            if ($group_size >= $max_group_size) {
+                $group_size = $max_group_size;
+            }
+            $segment .= '/capacity/' . '[' . $group_size . ' TO ' . $max_group_size . ']';
+        }*/
+
+        drupal_goto('availability-search' . $segment, array(
+            'query' => array(
+                $segment_location => $location,
+                'group_size' => $group_size,
+                'number_rooms' => $number_rooms,
+            ),
+        ));
+    }
+
+    if (isset($form_state['values']['arrival']) && !isset($form_state['values']['departure'])) {
+        form_set_error('departure', t('Departure date is required.'));
+    }
+
+    if (!isset($form_state['values']['arrival']) && isset($form_state['values']['departure'])) {
+        form_set_error('arrival', t('Arrival date is required.'));
+    }
+}
+
+
+// Submit function for iterautem availability form
+
+function ia_property_bat_facets_availability_submit($form, &$form_state)
+{
+
+    // Set location to "All" if not selected.
+    $location = $form_state['values']['location'];
+    if (!$location) {
+        $location = 'All';
+    }
+
+    if (variable_get('roomify_availability_search_form_location', 'area') == 'area_type') {
+        $segment_location = 'field_sp_area_type';
+    } else {
+        $segment_location = 'location';
+    }
+
+    $segment = '';
+
+    if ($location != 'All') {
+        $area_term = taxonomy_term_load($location);
+        $location_filter = str_replace(' ', '-', $area_term->name);
+        $segment .= '/' . $segment_location . '/' . $location_filter;
+    }
+
+    /*if ($group_size && $number_rooms == 1) {
+        $max_group_size = variable_get('roomify_max_property_type_capacity', '100');
+        // Filter search from group_size to the maximum capacity of the biggest
+        // type in the site.
+        if ($group_size >= $max_group_size) {
+            $group_size = $max_group_size;
+        }
+        $segment .= '/capacity/' . '[' . $group_size . ' TO ' . $max_group_size . ']';
+    }*/
+
+    $form_state['redirect'] = array('availability-search' . $segment, array('query' => array('bat_start_date' => $form_state['values']['arrival'], 'bat_end_date' => $form_state['values']['departure'], $segment_location => $form_state['values']['location'], 'group_size' => $form_state['values']['group_size'], 'number_rooms' => $form_state['values']['rooms'])));
+}
+
+/**
+ * Implement hook_bat_facets_search_results_alter()
+ * Allow modules to alter results from faceted search.
+ *
+ * @param array $units
+ * @param array $context
+ */
+/*function ia_property_bat_facets_bat_facets_search_results_alter(&$units, $context) {
+    unset($units[0]);
+}*/
+
+/**
+ * Implements hook_search_api_query_alter().
+ *
+ * @param SearchApiQueryInterface $query
+ *   The search query being executed.
+ */
+function ia_property_bat_facets_search_api_query_alter($query)
+{
+    if ($query->getIndex()->getEntityType()) {
+
+        $info = entity_get_info($query->getIndex()->getEntityType());
+
+        // Only modify the query if this query is against roomify_property.
+        if ($info['base table'] == 'roomify_properties') {
+
+            //$query->sort('property_id', 'DESC');
+
+            // Get this widget's settings.
+            $index = $query->getIndex();
+            $facets = facetapi_get_enabled_facets('search_api@' . $index->machine_name);
+            $adapter = facetapi_adapter_load('search_api@' . $index->machine_name);
+            $realm = facetapi_realm_load('block');
+
+
+            if (isset($facets['property_bat_type_reference'])) {
+
+                $settings = $adapter->getFacetSettings($facets['property_bat_type_reference'], $realm);
+
+                // Get URL parameters.
+                $params = drupal_get_query_parameters();
+
+                if (!(isset($params['bat_start_date']) &&
+                    !empty($params['bat_start_date']) &&
+                    isset($params['bat_end_date']) &&
+                    !empty($params['bat_end_date']))
+                ) {
+
+
+                    $valid_properties_ids = array_keys(roomify_property_ids()); // Obtener todos los id de las propiedades
+
+                    if (isset($params['number_rooms']) && $params['number_rooms'] != 0 && $params['number_rooms'] != 1) {
+                        $valid_properties_ids = _check_rooms_number(false, $valid_properties_ids, $params['number_rooms']);
+                    }
+                    if ( isset($params['group_size']) && $params['group_size'] != 0 && $params['group_size'] != 1) {
+                        $valid_properties_ids = _filter_rooms_max_capacity(false, $valid_properties_ids, $params['group_size'], $params['number_rooms'], null);
+                    }
+
+                    // If no types are available, zero out results.
+                    if (empty($valid_properties_ids)) {
+                        $query->condition($info['entity keys']['id'], 1, '<');
+                    } else {
+                        // Limit the search API query to entity ids with availability.
+                        $query->condition($info['entity keys']['id'], $valid_properties_ids, 'IN');
+                    }
+
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Se llama cuando se especifican fechas de arrivo y de salida
+ * @param $valid_properties_ids son los cuartos que estan disponibles en las fechas especificadas
+ * @param $context
+ */
+
+function ia_property_bat_facets_property_bat_facets_search_results_alter(&$valid_properties_ids, $context)
+{
+
+    $params = drupal_get_query_parameters();
+
+    if ( isset($params['number_rooms']) && $params['number_rooms'] != 0 && $params['number_rooms'] != 1) {
+        $valid_properties_ids = _check_rooms_number(true, $valid_properties_ids, $params['number_rooms']);
+    }
+    if ( isset($params['group_size']) && $params['group_size'] != 0 && $params['group_size'] != 1) {
+        $valid_properties_ids = _filter_rooms_max_capacity(true, $valid_properties_ids, $params['group_size'], $params['number_rooms'], $context);
+    }
+
+}
+
+function _filter_rooms_max_capacity($flag_availability, $valid_properties_ids, $group_size_ref, $number_rooms_ref, $context)
+{
+
+    $final_properties_id = array();
+
+    if ($flag_availability) {
+        $valid_states_names = array();
+        foreach ($context['valid_states'] as $state_id) {
+            $state = bat_event_load_state($state_id);
+            $valid_states_names[] = $state['machine_name'];
+        }
+    }
+
+    $properties = entity_load('roomify_property', $valid_properties_ids, array(), TRUE);
+
+    foreach ($properties as $property) {
+        $types = field_get_items('roomify_property', $property, 'property_bat_type_reference');
+
+        foreach ($types as $type_id) {
+            $type = bat_type_load($type_id['target_id']);
+
+            $wrapper = $type->wrapper(); //get wrapper
+            $max_capacity = $wrapper->field_st_max_capacity->value(); //get max_capacity of the room
+
+            if ($flag_availability) {
+                if (bat_event_get_matching_units($context['start_date'], $context['end_date'], $valid_states_names, $type->type_id, $context['event_type']) !== FALSE) {
+
+                    // Include the property in the search.
+
+                    $property_room_capacity[] = intval($max_capacity);
+
+                }
+
+            } else {
+                $property_room_capacity[] = intval($max_capacity);
+            }
+
+
+        }
+        array_multisort($property_room_capacity, SORT_NUMERIC, SORT_DESC); //ordenar los cuartos por capacidad de mayor a menor
+        if ($number_rooms_ref == 0) {
+            $suma_mayores_cuartos = array_sum($property_room_capacity); // sumar la capacidad de todos los cuartos
+        } else {
+            $suma_mayores_cuartos = array_sum(array_slice($property_room_capacity, 0, $number_rooms_ref)); // obtener el numero de cuartos solicitados y sumar su capacidad
+        }
+
+        unset($property_room_capacity); //limpiar para la nueva propiedad
+
+        if ($suma_mayores_cuartos >= $group_size_ref) {
+            $final_properties_id[] = $property->property_id; // entonces agrego la propiedad a los resultados.
+        }
+
+
+    }
+    return $final_properties_id;
+}
+
+function _equal_one($var) {
+    return ($var == 1);
+}
+
+function _bigger_than_rooms($var) {
+    // Get URL parameters.
+    $params = drupal_get_query_parameters();
+    return ($var >= $params['number_rooms']);
+}
+
+
+function _check_rooms_number($flag_availability, $properties_id, $rooms_ref)
+{
+    $valid_properties_ids = array();
+
+    if ($flag_availability) {
+        $count = array_count_values($properties_id);
+        $valid_properties_ids = array_keys(array_filter($count, '_bigger_than_rooms'));
+        $potential_valid_properties = array_keys(array_filter($count, '_equal_one'));
+
+    } else {
+        $potential_valid_properties = $properties_id;
+    }
+    $properties = entity_load('roomify_property', $potential_valid_properties, array(), TRUE);
+
+    foreach ($properties as $property) {
+
+        $types = field_get_items('roomify_property', $property, 'property_bat_type_reference');
+
+        if ($property->type == 'casa_property') {
+            $type = bat_type_load($types[0]['target_id']);
+            $wrapper = $type->wrapper(); //get wrapper
+            $room_count = $wrapper->field_st_bedrooms->value();
+        } elseif($flag_availability) {
+            $room_count = 0;
+        }
+        else{
+            $room_count = count($types);
+        }
+        if ($room_count >= $rooms_ref) {
+            $valid_properties_ids[] = $property->property_id;
+        }
+
+    }
+
+    return $valid_properties_ids;
+}
+
+/**
+ * Lets modules alter a search query before executing it.
+ *
+ * @param SearchApiQueryInterface $query
+ *   The search query being executed.
+ */
+/*function ia_property_bat_facets_search_api_query_alter(SearchApiQueryInterface $query) {
+    if ($query->getIndex()->getEntityType()) {
+        $info = entity_get_info($query->getIndex()->getEntityType());
+
+        // Only modify the query if this query is against roomify_property.
+        if ($info['base table'] == 'roomify_properties') {
+
+            $query->condition($info['entity keys']['id'], 0, '<>');
+
+        }
+        }
+}*/
+
+/**
+ * Alter the search results before they are returned.
+ *
+ * @param array $results
+ *   The results returned by the server, which may be altered. The data
+ *   structure is the same as returned by SearchApiQueryInterface::execute().
+ * @param SearchApiQueryInterface $query
+ *   The search query that was executed.
+ */
+/**function ia_property_bat_facets_search_api_results_alter(array &$results, SearchApiQueryInterface $query) {
+ *
+ * if ($query->getOption('search id') == 'search_api_views:properties_index:panel_pane_2'){
+ *
+ * }
+ *
+ * }**/

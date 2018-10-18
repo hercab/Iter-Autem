@@ -1,0 +1,8 @@
+name = Iter Autem Property BAT Facets
+description = Facet API facets for Iter Autem Properties.
+core = 7.x
+
+package = BAT Iter Autem
+
+dependencies[] = property_bat_facets
+dependencies[] = feature_ia_roomify_search

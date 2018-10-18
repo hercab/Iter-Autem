@@ -1,0 +1,15 @@
+name = Cash on Delivery payment
+description = Cash on Delivery offline payment
+package = Commerce (offline payments)
+dependencies[] = commerce_cop
+dependencies[] = features
+core = 7.x
+
+; Features integration
+features[commerce_custom_offline_payment][] = commerce_cod
+features[features_api][] = api:2
+
+; Information added by drush on 2016-07-13
+version = "6b8a9ae5c395f6e0d7cc2bcb5616835a2d5a2898"
+project = "commerce_cop"
+datestamp = "1468436390"

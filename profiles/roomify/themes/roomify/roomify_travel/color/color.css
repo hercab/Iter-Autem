@@ -1,0 +1,40 @@
+/* HEADER */
+body header.roomify-header { background-color: #ffffff; }
+body header.roomify-header { border-color: #e7e7e7; }
+
+/* FOOTER */
+body footer.roomify-footer { background-color: #15262f; }
+
+
+/* SITE NAME - LINKS HEADER/FOOTER */
+body header.roomify-header a.name,
+body footer.roomify-footer a { color: #484848; }
+
+/* USER ICON */
+.roomify-sidebar-menu-toggle svg { fill: #484848; }
+/* HAMBURGER MENU */
+body header.roomify-header .navbar-toggle .icon-bar {
+  background: #484848;
+}
+/* SVG FOOTER */
+.roomify-footer .rsp-social-icon svg {
+  fill: #484848;
+}
+
+
+/* ON HOVER LINKS HEADER/FOOTER */
+body header.roomify-header a.name:hover,
+body footer.roomify-footer a:hover { color: #000000; }
+
+body footer.roomify-footer .rsp-social-icon { background: #ffffff; }
+
+.roomify-footer svg:hover,
+/* USER ICON */
+.roomify-sidebar-menu-toggle svg:hover { fill: #000000; }
+/* HAMBURGER MENU */
+body header.roomify-header .navbar-toggle:hover .icon-bar {
+  background: #000000;
+}
+
+/* TEXT HEADER/FOOTER */
+body footer.roomify-footer { color: #f8f8f8; }

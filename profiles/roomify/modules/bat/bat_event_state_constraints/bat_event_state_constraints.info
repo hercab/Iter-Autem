@@ -1,0 +1,8 @@
+name = BAT Event State Constraints
+description = Manages event state constraints for BAT.
+core = 7.x
+
+package = BAT
+
+dependencies[] = bat
+dependencies[] = bat_event

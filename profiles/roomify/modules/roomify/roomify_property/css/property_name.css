@@ -1,0 +1,31 @@
+#modalContent div.ctools-modal-content .modal-header .modal-title {
+  display: none;
+}
+.form-type-textfield.form-item-property-name {
+  margin: 0 25px;
+  vertical-align: middle;
+}
+.form-type-textfield.form-item-property-name input {
+  max-width: 100%;
+}
+.form-type-textfield.form-item-property-name label {
+  padding-top: 5px;
+}
+#modalContent div.ctools-modal-content div.form-radios div.form-item {
+  display: inline-block;
+  margin-left: 40px;
+}
+#modalContent div.ctools-modal-content div.form-radios div.form-item label {
+  display: inline-block;
+  max-width: 250px;
+  vertical-align: middle;
+}
+#modalContent div.ctools-modal-content div.form-radios div.form-item label[for=edit-property-type-casa-property] {
+  padding-bottom: 9px;
+}
+#modalContent div.ctools-modal-content div.form-radios div.form-item label[for=edit-property-type-locanda-property] {
+  padding-top: 9px;
+}
+#modalContent div.ctools-modal-content input[id^=edit-next] {
+  float: right;
+}

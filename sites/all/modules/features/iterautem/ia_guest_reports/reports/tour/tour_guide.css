@@ -1,0 +1,215 @@
+
+/* PDF */
+
+/*@page {*/
+    /*size: 15cm 37cm;	*//* width height  <length>{1,2} | auto | portrait | landscape NB 'em' and 'ex' % are not allowed */
+    /*margin: 10%;	*//* % of page-box width for LR, height for TB */
+    /*margin-header: 5mm;*/
+    /*margin-footer: 5mm;*/
+    /*margin-left: 4cm;*/
+    /*margin-right: 2cm;*/
+    /*odd-header-name: myHeader2Odd;*/
+    /*even-header-name: html_myHTMLHeaderEven;*/
+    /*odd-footer-name: html_myHTMLFooterOdd;*/
+    /*even-footer-name: myFooter2Even;*/
+    /*marks: crop;	 *//* crop | cross | none */
+/*}*/
+.paging{
+    page-break-after: always;
+}
+
+.clear-fix{
+    display: none;
+    clear: both;
+    height: 0;
+}
+
+.clear-fix.web{
+    display: block;
+    visibility: hidden;
+}
+/* END PDF*/
+
+.contact-banner{
+    height: 124px;
+    background-color: #280929;
+}
+
+.contact-banner .maleta {
+    float: left;
+    text-align: right;
+    width: 30%;
+}
+
+.contact-banner .subtitle {
+    color: #FFF;
+    padding-top: 30px;
+    float: left;
+    width: 40%;
+    text-align: center;
+
+}
+.contact-banner .subtitle span {
+    font-weight: bold;
+}
+
+.container-tg{
+    width: 900px;
+    margin: 0 auto;
+    font-size: 12px;
+    letter-spacing: -0.5px;
+}
+
+.logo-header{
+    text-align: center;
+}
+
+.area-image{
+    text-align: center;
+}
+
+/* ************ Properties ****** */
+
+/* *** ALL ***** */
+
+.property-container{
+    width: 100%;
+}
+.property-container .property-booking {
+    width: 100%;
+    float: left;
+}
+.property-container .property-image{
+    width: 50%;
+}
+
+.property-container .even .property-image{
+    float: right;
+}
+
+.property-container .odd .property-image{
+    float: left;
+}
+.property-container .property-details p{
+    margin: 0;
+}
+
+.property-container .odd .property-details{
+    float: left;
+    text-align: left;
+    padding-left: 20px;
+}
+.property-container .even .property-details{
+    float: right;
+    text-align: right;
+    padding-right: 20px;
+}
+
+/**** END ALL *****/
+
+
+/******  WEB ******/
+.property-booking.web .property-details{
+    padding-top: 15px;
+    padding-bottom: 15px;
+    width: 50%;
+}
+/******** END WEB *****/
+
+/******** PDF ********/
+
+.property-details{
+    width: 45%;
+}
+
+/****** END PDF *****/
+
+/**** END PROPERTIES *****/
+
+
+
+/************************
+ ******Publicity*********
+ ************************/
+
+/* *** ALL ***** */
+
+.publicity-container{
+    display: block;
+    width: 100%;
+    padding-top: 30px;
+}
+
+.publicity-container  h3 {
+    text-align: center;
+}
+
+.publicity-container .publicity-element {
+    width: 20%;
+    padding: 0 10px;
+    float: left;
+    line-height: 1.5em;
+    margin-bottom: 15px;
+}
+
+.publicity-container .bussiness_type_container h4{
+    border-bottom: 1px solid;
+    padding-bottom: 5px;
+}
+/******* END ALL *****/
+
+/******* WEB ********/
+
+/********* END WEB ****/
+
+/******* PDF ********/
+
+/********* END PDF ****/
+
+/**************************
+ ****** END PUBLICITY *****
+ **************************/
+
+/************************
+ ****** Location *********
+ ************************/
+
+/****** ALL **********/
+.header-location{
+
+}
+
+.header-location .subtitle {
+    color: white;
+    text-align: center;
+    margin: 0;
+    padding-top: 40px;
+}
+
+.banner-location{
+    height: 156px;
+}
+
+
+/******* END ALL *****/
+
+/******* PDF ********/
+
+
+/********* END PDF ****/
+
+
+
+/******* WEB ********/
+
+
+
+/********* END WEB ****/
+
+/*****************
+******FOOTER******
+******************/
+
+.footer-guide{
+    background-color: #D3CACB;
+}

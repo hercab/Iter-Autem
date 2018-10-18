@@ -1,0 +1,179 @@
+// Contact Page Styles
+
+.page-contact-us {
+  .region-content,
+  .bootstrap-one-column {
+    @include make-row();
+  }
+  .region-content {
+    .panel-pane {
+      margin-bottom: 15px;
+      display: inline-block;
+      width: 100%;
+      padding: 15px;
+      background: white;
+      border: 1px solid #ececec;
+      border-radius: 2px;
+      .pane-title {
+        border-bottom: 1px solid #ececec;
+        padding-bottom: 15px
+      }
+    }
+  }
+  .panel_sl_content {
+    padding: 0;
+  }
+  .panel {
+    background: transparent;
+  }
+  .entitytype-contact-form {
+    margin-top: 20px;
+    width: 100%;
+    font-size: 16px;
+    .date-combo {
+      border: none;
+      -webkit-box-shadow: none;
+      box-shadow: none;
+      margin-bottom: 0;
+      legend {
+        background: none;
+        border: none;
+        width: auto;
+        float: left;
+        margin: 0;
+        padding-left: 0;
+        min-width: 100px;
+        padding: 0
+      }
+      .panel-title {
+        font-size: 16px;
+      }
+      .panel-body {
+        display: inline-block;
+        padding: 0;
+        .date-padding {
+          padding-top: 0;
+          padding-bottom: 0;
+        }
+      }
+      .container-inline-date {
+        label,
+        .help-block {
+          display: none;
+        }
+        .form-item {
+          margin-bottom: 0;
+        }
+      }
+    }
+    .field-name-field-contact-arrival,
+    .field-name-field-contact-departure {
+      margin-bottom: 30px;
+      @media (max-width: $screen-xs) {
+        .date-padding {
+          padding-left: 0;
+        }
+      }
+    }
+    .field-name-field-contact-arrival,
+    .field-name-field-contact-departure,
+    .field-name-field-contact-first-name,
+    .field-name-field-contact-last-name {
+      @include make-sm-column(6);
+      margin-bottom: 30px;
+      label {
+        font-weight: 400;
+        font-size: 16px;
+      }
+    }
+    .field-name-field-contact-telephone,
+    .field-name-field-contact-mail-address {
+      @include make-sm-column(6);
+      label {
+        font-weight: 400;
+        font-size: 16px;
+      }
+      @media (min-width: $screen-sm) {
+        margin-right: 50%;
+      }
+      margin-bottom: 30px;
+      input {
+        width: 100%;;
+      }
+    }
+    .field-name-field-booking-request,
+    .field-name-field-contact-more-informations {
+      @include make-sm-column(12);
+      input {
+        width: 100%;;
+      }
+    }
+    .form-actions {
+      padding-left: 15px;
+      clear: both;
+    }
+  }
+}
+
+.page-entityform {
+  .submitted {
+    display: inline-block;
+    width: 100%;
+    margin: 25px 0;
+    font-size: 18px;
+  }
+  .field-name-field-contact-arrival,
+  .field-name-field-contact-departure,
+  .field-name-field-contact-first-name,
+  .field-name-field-contact-last-name,
+  .field-name-field-contact-mail-address,
+  .field-name-field-contact-telephone {
+    display: inline-block;
+    font-size: 16px;
+    width: 100%;
+    margin-bottom: 15px;
+    .field-label {
+      display: inline-block;
+      float: left;
+      margin-right: 5px;
+    }
+  }
+  .field-name-field-booking-request {
+    display: none;
+  }
+  .field-name-field-contact-more-informations  {
+    display: inline-block;
+    font-size: 16px;
+    width: 100%;
+    margin-bottom: 15px;
+  }
+}
+.page-entityform-edit {
+  #contact-entityform-edit-form {
+    .submitted {
+      display: inline-block;
+      width: 100%;
+      margin: 25px 0;
+      font-size: 18px;
+    }
+    .field-name-field-contact-arrival,
+    .field-name-field-contact-departure {
+      width: 40%;
+      margin-right: 10%;
+      display: inline-block;
+      float: left;
+      .panel-heading {
+        background: #0074bd;
+        color: white;
+      }
+      @media (max-width: $screen-sm) {
+        width: 100%;
+        margin: 0;
+      }
+    }
+    .redirect-list {
+      display: none;
+      width: 100%;
+    }
+  }
+}

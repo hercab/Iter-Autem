@@ -1,0 +1,75 @@
+<?php
+/**
+ * @file
+ * Code for the Iterautem Publicity Content Type feature.
+ */
+
+include_once 'iterautem_publicity_content_type.features.inc';
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function iterautem_publicity_content_type_ctools_plugin_directory($owner, $plugin_type) {
+    if ($owner == 'ctools' && $plugin_type == 'content_types') {
+        return 'plugins/content_types';
+    }
+}
+
+/**
+ * Implements hook_commerce_checkout_pane_info().
+ */
+function iterautem_publicity_content_type_commerce_checkout_pane_info()
+{
+    $checkout_panes = array();
+
+    // bookmarks places checkout pane.
+    $checkout_panes['bookmark_places'] = array(
+        'title' => t('Bookmark Places'),
+        'base' => 'bookmark_places_contents_pane',
+        'file' => 'includes/bookmark_places.checkout_pane.inc',
+        'page' => 'complete',
+        'weight' => -10,
+    );
+
+    return $checkout_panes;
+
+}
+
+/**
+ * Implemets template_preprocess_flag()
+ */
+function iterautem_publicity_content_type_preprocess_flag(&$variables){
+    $flag =& $variables['flag'];
+
+    if($flag->name === "bookmarks"){
+        drupal_add_css(drupal_get_path('module', 'iterautem_publicity_content_type') . '/css/bookmark_places.css');
+    }
+}
+
+function iterautem_publicity_content_type_roomify_rights_alter(&$permissions){
+    if(isset($permissions['authenticated user'])) {
+        $permissions['authenticated user'] += array('flag bookmarks' => 'flag bookmarks');
+        $permissions['authenticated user'] += array('unflag bookmarks' => 'unflag bookmarks');
+    }
+    if(isset($permissions['roomify manager'])){
+        $permissions['roomify manager'] += array('create publicity content' => 'create publicity content');
+        $permissions['roomify manager'] += array('edit any publicity content' => 'edit any publicity content');
+
+    }
+    if(isset($permissions['property owner'])){
+        $permissions['property owner'] += array('create publicity content' => 'create publicity content');
+        $permissions['property owner'] += array('edit own publicity content' => 'edit own publicity content');
+    }
+}
+
+/**
+ * Implements hook_menu_link_alter().
+ *
+ * @param $item
+ * Associative array defining a menu link as passed into menu_link_save()
+ */
+function iterautem_publicity_content_type_menu_link_alter(&$item) {
+    if ($item['link_path'] == 'admin/publicity/view-all') {
+        $item['options'] = array('attributes' => array('class' => 'properties'));
+    }
+}

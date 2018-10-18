@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE root [
+<!ENTITY nbsp "&#160;">
+]>
+<html xmlns:frx="urn:FrxReports">
+<head>
+    <title></title>
+    <frx:category>Guest</frx:category>
+    <frx:options input_format="forena_report" skin="tour/guest_skin"/>
+    <frx:parameters>
+        <frx:parm id="order_id" label="Orders" require="1" data_source="guest/get_user_orders" data_field="order_id" label_field="order_id" type="select" />
+    </frx:parameters>
+    <!--<frx:data id="items" block="iterautem/order_to_item" />
+    <frx:data id="properties" block="iterautem/item_to_property" frx:parameters="item_id={items}"/>-->
+        <frx:docgen>
+            <frx:doc type="email"/>
+            <frx:doc type="pdf"/>
+            <!--<frx:doc type="svg"/>-->
+        </frx:docgen>
+        <frx:fields>
+            <frx:field id="test" link="listin/borrel-iznaga" format="" format-string="" target=""/>
+        </frx:fields>
+        <frx:menu/>
+        <frx:cache/>
+        <style/>
+</head>
+
+<body>
+
+    <div frx:block="guest/get_user_mail_to" frx:foreach="*" frx:skip_root="true">
+        <div class="email-document">
+            <div style="display: none">
+                <table>
+                    <tbody>
+                    <tr>
+                        <th>From</th>
+                        <td class="email-header-from">{mail_from.site_email}</td>
+                    </tr>
+                    <tr>
+                        <th>To</th>
+                        <td class="email-header-to">{mail_to}</td>
+                    </tr>
+                    <tr>
+                        <th>Subject</th>
+                        <td class="email-header-subject">Tour Guide for {name}: order number {order_id}</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="email-body container-tg">
+
+                <div id="area" class="paging" frx:block="guest/areas" frx:foreach="*">
+
+                    <header>
+                        <div class="logo-header"><img src="{skin.dir}/logo_ia_guide.jpg"></img></div>
+                    </header>
+
+                    <div class="area-image">{area.field_area_featured_image}</div>
+
+                    <div id="properties" class="property-container" frx:block="guest/get_properties_from_area">
+                        <div id="property" class="property-booking web" frx:foreach="*">
+
+                            <div class="property-image">{field_sp_featured_image}</div>
+                            <div class="property-details">
+                                <h2>{property.name}</h2>
+                                <div>{property.field_sp_short_description}</div>
+                                <div>{property.field_sp_address}</div>
+                                <div>{property.field_sp_how_to_reach}</div>
+                                <div>{property.field_sp_location}</div>
+                            </div>
+
+                        </div>
+                        <div class="clear-fix web">.</div>
+
+                    </div>
+                    <div class="contact-banner">
+                        <div class="maleta"><img src="{skin.dir}/maleta.jpg" width="150" height="124"/></div>
+                        <div class="subtitle">
+                            <p>Nuestro contacto en <span>{area.name}</span><br/><span>(+53) 888 8888 8888</span></p>
+                        </div>
+                    </div>
+
+                    <div id="publicity" class="publicity-container">
+                        <h3>Le sugerimos lugares que pueden ser de <br/> utiliad durante su estancia...</h3>
+                        <div id="bussiness_type" class="bussiness_type_container" frx:block="guest/get_bussiness_type" frx:foreach="*">
+                            <h4>{bussiness_type.name}</h4>
+                            <div  id="pub" class="publicity-element" frx:parameters="area_id={area.area_id}" frx:block="guest/get_publicity" frx:foreach="*">
+                                    <div style="margin-bottom: 15px">{pub.field_sp_featured_image}</div>
+                                    <strong style="text-transform: uppercase">{pub.title}</strong>
+                                    <div>{pub.field_sp_short_description}</div>
+                                    <div><strong>TEL: </strong>{pub.field_telephone}</div>
+                                    <div><strong>HOR: </strong>{pub.field_full_time_work}{pup.field_work_hours}</div>
+                                    <div><strong>DIR: </strong>{pub.field_sp_address}</div>
+                            </div>
+                            <div class="clear-fix web">.</div>
+                        </div>
+                        <div class="clear-fix web">.</div>
+
+                    </div>
+                    <div id="location" class="location-container">
+                        <div class="header-location">
+                            <div frx:renderer="FrxImageStyle" frx:image_style="forena_banner" frx:block="guest/get_uri_image_from_area"></div>
+                        </div>
+
+                        <div frx:renderer="FrxMap" frx:block="guest/get_location_from_property"></div>
+
+                    </div>
+
+                </div>
+
+                <footer class="footer-guide">
+                    <table width="100%">
+                        <tr>
+                            <td width="40%" style="text-align: center;">
+                                <span style="font-weight: bold; font-size: 12px;">www.iterautem.com</span>
+                            </td>
+                            <td width="20%" align="center" style="font-weight: bold; font-style: italic;">
+                                <div class="logo-header"><img src="{skin.dir}/logo_ia_guide.jpg"></img></div>
+                            </td>
+                            <td width="40%" style="text-align: center;">
+                                <span style="font-weight: bold; font-size: 12px;">info@iterautem.com</span>
+                            </td>
+                        </tr>
+                    </table>
+                </footer>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

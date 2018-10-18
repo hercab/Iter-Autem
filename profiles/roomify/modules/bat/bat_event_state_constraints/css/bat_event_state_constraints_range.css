@@ -1,0 +1,44 @@
+.field-widget-bat-event-state-constraints-range
+.field-widget-bat-event-state-constraints-range .condition-title,
+.field-widget-bat-event-state-constraints-range .form-item {
+  margin-bottom: 5px !important;
+}
+
+.field-widget-bat-event-state-constraints-range .bat-event-state-range--remove-button {
+  clear: both;
+  float: right;
+}
+
+.field-widget-bat-event-state-constraints-range input[name^="add_min_max"] {
+  display: block !important;
+}
+
+.field-widget-bat-event-state-constraints-range .ajax-progress {
+  float: right;
+  margin: 5px 10px 0 0;
+}
+
+.field-widget-bat-event-state-constraints-range .group-conditions-booking-if-start,
+.field-widget-bat-event-state-constraints-range .group-conditions-maximum-stay,
+.field-widget-bat-event-state-constraints-range .group-conditions-minimum-stay,
+.field-widget-bat-event-state-constraints-range .group-conditions-period {
+  clear: both !important;
+}
+
+.field-widget-bat-event-state-constraints-range .group-conditions-booking-must-start .field-prefix,
+.field-widget-bat-event-state-constraints-range .group-conditions-booking-if-start,
+.field-widget-bat-event-state-constraints-range .group-conditions-period label,
+.field-widget-bat-event-state-constraints-range .group-conditions-maximum-stay,
+.field-widget-bat-event-state-constraints-range .group-conditions-minimum-stay {
+  float: left !important;
+  margin-right: 12px !important;
+}
+
+.field-widget-bat-event-state-constraints-range .group-conditions-maximum-stay-nights,
+.field-widget-bat-event-state-constraints-range .group-conditions-minimum-stay-nights {
+  float: left;
+}
+
+.field-widget-bat-event-state-constraints-range .bat-date-range .form-type-textfield label {
+  display: none !important;
+}

@@ -1,0 +1,23 @@
+<?php
+/**
+ * @file
+ * Drupal needs this blank file.
+ */
+
+
+include_once 'includes/tour_guide_pet.inc';
+include_once 'includes/tour_guide_forena.inc';
+
+/**
+ * Allows modules to alter permissions defined with the hook_roomify_rights.
+ *
+ * @param $permissions
+ */
+function ia_guest_reports_roomify_rights_alter(&$permissions) {
+    // Remove permission 'access content' for anonymous users.
+    if(isset($permissions['guest'])) {
+        $permissions['guest'] += array('access guest data' => 'access guest data');
+        $permissions['guest'] += array('use forena pdf document generation service' => 'use forena pdf document generation service');
+        $permissions['guest'] += array('perform email merge' => 'perform email merge');
+    }
+}

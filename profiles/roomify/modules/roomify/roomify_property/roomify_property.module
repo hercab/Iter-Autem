@@ -1,0 +1,1997 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function roomify_property_menu() {
+  $items = array();
+
+  $items['admin/bat/config/property/wizard/%ctools_js'] = array(
+    'page callback' => 'roomify_property_wizard',
+    'page arguments' => array(5),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/bat/config/type/wizard/%roomify_property/%ctools_js'] = array(
+    'page callback' => 'roomify_type_wizard',
+    'page arguments' => array(5, 6),
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_entity_info().
+ */
+function roomify_property_entity_info() {
+  $return['roomify_property'] = array(
+    'label' => t('Roomify Property'),
+    // The entity class and controller class extend the classes provided by the
+    // Entity API.
+    'entity class' => 'RoomifyProperty',
+    'controller class' => 'RoomifyPropertyController',
+    'base table' => 'roomify_properties',
+    'revision table' => 'roomify_properties_revision',
+    'revision' => 'vid',
+    'fieldable' => TRUE,
+    'entity keys' => array(
+      'id' => 'property_id',
+      'bundle' => 'type',
+      'revision' => 'revision_id',
+      'label' => 'name',
+      'language' => 'language',
+    ),
+    // Bundles are defined by the property bundles below.
+    'bundles' => array(),
+    // Bundle keys tell the FieldAPI how to extract information from the bundle
+    // objects.
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'view modes' => array(
+      'display' => array(
+        'label' => t('Display'),
+        'custom settings' => FALSE,
+      ),
+    ),
+    'label callback' => 'entity_class_label',
+    'uri callback' => 'entity_class_uri',
+    'creation callback' => 'roomify_property_create',
+    'access callback' => 'roomify_property_access',
+    'access arguments' => array(
+      'user key' => 'uid',
+      'access tag' => 'roomify_property_access',
+    ),
+    'permission labels' => array(
+      'singular' => t('property'),
+      'plural' => t('properties'),
+    ),
+    'module' => 'roomify_property',
+    // The information below is used by the RoomifyPropertyUIController (which extends
+    // the EntityDefaultUIController).
+    'admin ui' => array(
+      'path' => 'admin/bat/config/property',
+      'file' => 'roomify_property.admin.inc',
+      'controller class' => 'RoomifyPropertyUIController',
+      'menu wildcard' => '%roomify_property',
+    ),
+    'metadata controller class' => 'RoomifyPropertyMetadataController',
+    'translation' => array(
+      'entity_translation' => array(
+        'base path' => 'admin/bat/config/property/manage/%roomify_property',
+        'path wildcard' => '%roomify_property',
+        'path schemes' => array(
+          'default' => array(),
+        ),
+        'default settings' => array(
+          'default_language' => LANGUAGE_NONE,
+          'hide_language_selector' => FALSE,
+        ),
+      ),
+    ),
+  );
+
+  $return['roomify_property_type'] = array(
+    'label' => t('Roomify Property Type'),
+    'entity class' => 'RoomifyPropertyType',
+    'controller class' => 'RoomifyPropertyTypeController',
+    'base table' => 'roomify_property_types',
+    'fieldable' => TRUE,
+    'bundle of' => 'roomify_property',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'id',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'access callback' => 'roomify_property_type_access',
+    'module' => 'roomify_property',
+    // Enable the entity API's admin UI.
+    'admin ui' => array(
+      'path' => 'admin/bat/config/property-types',
+      'file' => 'roomify_property_type.admin.inc',
+      'controller class' => 'RoomifyPropertyTypeUIController',
+    ),
+  );
+
+  return $return;
+}
+
+/**
+ * Implements hook_entity_info_alter().
+ *
+ * We are adding the info about the property types via a hook to avoid a recursion
+ * issue as loading the room types requires the entity info as well.
+ */
+function roomify_property_entity_info_alter(&$entity_info) {
+  foreach (roomify_property_get_types() as $type => $info) {
+    $entity_info['roomify_property']['bundles'][$type] = array(
+      'label' => $info->label,
+      'admin' => array(
+        'path' => 'admin/bat/config/property-types/manage/%roomify_property_type',
+        'real path' => 'admin/bat/config/property-types/manage/' . $type,
+        'bundle argument' => 5,
+        'access arguments' => array('bypass roomify_property entities access'),
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function roomify_property_permission() {
+  $permissions = array();
+
+  // Permission for Roomify Property Types.
+  $permissions += array(
+    'administer roomify_property_type entities' => array(
+      'title' => t('Administer property types'),
+      'description' => t('Allows users to add property types and configure their fields.'),
+      'restrict access' => TRUE,
+    ),
+  );
+
+  $permissions += array(
+    'view any unpublished properties' => array(
+      'title' => t('View any unpublish property'),
+      'description' => t('Allows users to view any property currently suspended.'),
+    ),
+    'view own unpublished properties' => array(
+      'title' => t('View own unpublish property'),
+      'description' => t('Allows users to view own property currently suspended.'),
+    ),
+    'unpublish any property' => array(
+      'title' => t('Unpublish any property'),
+      'description' => t('Allows users to set any property as suspended.'),
+    ),
+    'unpublish own property' => array(
+      'title' => t('Unpublish own property'),
+      'description' => t('Allows users to set own property as suspended.'),
+    ),
+    'view roomify_property revisions' => array(
+      'title' => t('View property revisions'),
+      'description' => t('Allows users to view property revisions.'),
+    ),
+    'revert roomify_property revisions' => array(
+      'title' => t('Revert property revisions'),
+      'description' => t('Allows users to revert property revisions.'),
+    ),
+    'delete roomify_property revisions' => array(
+      'title' => t('Delete property revisions'),
+      'description' => t('Allows users to delete property revisions.'),
+    ),
+  );
+
+  $permissions += bat_entity_access_permissions('roomify_property');
+
+  return $permissions;
+}
+
+/**
+ * Implements hook_views_api().
+ */
+function roomify_property_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'roomify_property') . '/views',
+  );
+}
+
+/**
+ * Implements hook_views_plugins().
+ */
+function roomify_property_views_plugins() {
+  $module_path = drupal_get_path('module', 'roomify_property');
+
+  return array(
+    'row' => array(
+      'availability_calendar_plugin_rows' => array(
+        'title' => t('Availability calendar'),
+        'help' => t('Availability calendar.'),
+        'path' => $module_path . '/views/plugins/calendar',
+        'handler' => 'AvailabilityCalendarPluginRows',
+        'uses fields' => FALSE,
+        'uses options' => TRUE,
+        'type' => 'normal',
+      ),
+    ),
+    'style' => array(
+      'availability_calendar_plugin_one_row' => array(
+        'title' => t('Availability calendar'),
+        'help' => t('Availability calendar.'),
+        'path' => $module_path . '/views/plugins/calendar',
+        'handler' => 'AvailabilityCalendarPluginOneRow',
+        'uses row plugin' => FALSE,
+        'uses options' => TRUE,
+        'type' => 'normal',
+      ),
+    ),
+  );
+}
+
+/**
+ * Determines whether the given user has access to a property revision.
+ *
+ * @param string $op
+ *   The operation being performed. One of 'view', 'revert', 'delete'.
+ * @param RoomifyProperty $property
+ * @param $revision_id
+ * @param object $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ *
+ * @return bool
+ *   Whether access is allowed or not.
+ */
+function roomify_property_access_revision($op, $property, $revision_id, $account = NULL) {
+  global $user;
+  $account = isset($account) ? $account : $user;
+
+  if ($revision_property = roomify_property_load_revision($revision_id)) {
+    if ($property->property_id != $revision_property->property_id) {
+      return FALSE;
+    }
+    else {
+      if (user_access('bypass roomify_property entities access')) {
+        return TRUE;
+      }
+
+      if ($op == 'view') {
+        return user_access('view roomify_property revisions');
+      }
+      elseif ($op == 'revert') {
+        return user_access('revert roomify_property revisions');
+      }
+      elseif ($op == 'delete') {
+        return user_access('delete roomify_property revisions');
+      }
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Determines whether the given user has access to a property.
+ *
+ * @param string $op
+ *   The operation being performed. One of 'view', 'update', 'create', 'delete'
+ *   or just 'edit' (being the same as 'create' or 'update').
+ * @param RoomifyProperty $property
+ *   Optionally a property to check access for. If nothing is
+ *   given, access for all properties is determined.
+ * @param object $account
+ *   The user to check for. Leave it to NULL to check for the global user.
+ *
+ * @return bool
+ *   Whether access is allowed or not.
+ */
+function roomify_property_access($op, $property = NULL, $account = NULL) {
+  global $user;
+  $account = isset($account) ? $account : $user;
+
+  if ($op == 'view' && $property !== NULL) {
+    if ($property->status == 0) {
+      if (!((user_access('view any unpublished properties', $account) ||
+            (user_access('view own unpublished properties', $account) && $account->uid == $property->uid)))) {
+        return FALSE;
+      }
+    }
+  }
+
+  return bat_entity_access($op, $property, $account, 'roomify_property');
+}
+
+/**
+ * Access callback: Checks whether the user has permission to add a property.
+ *
+ * @return bool
+ *   TRUE if the user has add permission, otherwise FALSE.
+ */
+function roomify_property_add_access() {
+  if (user_access('administer roomify_property_type entities')) {
+    return TRUE;
+  }
+
+  $bundles = roomify_property_get_types();
+  foreach ($bundles as $bundle) {
+    if (roomify_property_access('create', roomify_property_create(array('type' => $bundle->type, 'uid' => 0)))) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Access callback: Checks whether the user has permission to manage rooms.
+ *
+ * @return bool
+ *   TRUE if the user has permission, otherwise FALSE.
+ */
+function roomify_property_manage_types_access($property) {
+  if (user_access('administer roomify_property_type entities')) {
+    return TRUE;
+  }
+
+  if (roomify_property_access('update', $property)) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * The class used for property entities.
+ */
+class RoomifyProperty extends Entity {
+
+  /**
+   *
+   */
+  public function __construct($values = array()) {
+    parent::__construct($values, 'roomify_property');
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function defaultLabel() {
+    return $this->name;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  protected function defaultUri() {
+    switch ($this->type) {
+      case 'casa_property':
+      case 'locanda_property':
+        return array('path' => 'listing/' . $this->property_id);
+
+      case 'single_day_activity_property':
+      case 'multi_day_activity_property':
+      case 'single_day_tour_property':
+      case 'multi_day_tour_property':
+        return array('path' => 'activity/' . $this->property_id);
+
+      case 'space_property':
+        return array('path' => 'location/' . $this->property_id);
+
+      default:
+        return array('path' => 'property/' . $this->property_id);
+    }
+  }
+
+}
+
+/**
+ * The class used for property type entities.
+ */
+class RoomifyPropertyType extends Entity {
+
+  /**
+   * The property type.
+   *
+   * @var string
+   */
+  public $type;
+
+  /**
+   * The property type label.
+   *
+   * @var string
+   */
+  public $label;
+
+  /**
+   *
+   */
+  public function __construct($values = array()) {
+    parent::__construct($values, 'roomify_property_type');
+  }
+
+}
+
+/**
+ * The MetadataController for RoomifyProperty entities.
+ */
+class RoomifyPropertyMetadataController extends EntityDefaultMetadataController {
+
+  /**
+   *
+   */
+  public function entityPropertyInfo() {
+    $info = parent::entityPropertyInfo();
+
+    $properties = array('property_id', 'type', 'language', 'name', 'created', 'changed', 'uid');
+
+    foreach ($properties as $property) {
+      if (isset($info['roomify_property']['properties'][$property])) {
+        $info['roomify_property']['properties'][$property]['getter callback'] = 'entity_property_verbatim_get';
+        $info['roomify_property']['properties'][$property]['setter callback'] = 'entity_property_verbatim_set';
+      }
+    }
+
+    return $info;
+  }
+
+}
+
+/**
+ * The Controller for RoomifyProperty entities.
+ */
+class RoomifyPropertyController extends EntityAPIController {
+
+  /**
+   *
+   */
+  public function __construct($entityType) {
+    parent::__construct($entityType);
+  }
+
+  /**
+   *
+   */
+  public function create(array $values = array()) {
+    $values += array(
+      'property_id' => '',
+      'is_new' => TRUE,
+      'data' => '',
+      'name' => '',
+      'created' => '',
+      'language' => LANGUAGE_NONE,
+    );
+
+    $property = parent::create($values);
+
+    return $property;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function save($entity) {
+    global $user;
+
+    $entity->revision_uid = $user->uid;
+    $entity->revision_timestamp = REQUEST_TIME;
+
+    if (!isset($entity->log)) {
+      $entity->log = '';
+    }
+
+    parent::save($entity);
+
+    $entity->revision = FALSE;
+
+    // Add Path module support.
+    if (module_exists('path')) {
+      $this->savePath($entity);
+    }
+
+    // Add Pathauto module support.
+    if (module_exists('pathauto') && module_exists('entity_token')) {
+      module_load_include('inc', 'roomify_property', 'roomify_property.pathauto');
+      roomify_property_pathauto_update_alias($entity, empty($entity->is_new) ? 'update' : 'insert');
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function delete($ids) {
+    foreach (roomify_property_load_multiple($ids) as $property) {
+      $uri = $property->uri();
+
+      // Add Path module support.
+      if (module_exists('path')) {
+        $this->deletePath($property);
+      }
+
+      // Add Pathauto module support.
+      if (module_exists('pathauto') && module_exists('entity_token')) {
+        pathauto_entity_path_delete_all('roomify_property', $property, $uri['path']);
+      }
+    }
+
+    parent::delete($ids);
+  }
+
+  /**
+   * Overriding the buildContent function to add entity specific fields.
+   */
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+    $content = parent::buildContent($entity, $view_mode, $langcode, $content);
+
+    return $content;
+  }
+
+  /**
+   * Updates a property path alias upon saving.
+   *
+   * @param RoomifyProperty $property
+   *   The property being saved.
+   */
+  public function savePath(RoomifyProperty $property) {
+    $uri = $property->uri();
+
+    if (isset($property->path)) {
+      $path = $property->path;
+      $path['alias'] = trim($path['alias']);
+
+      // Delete old alias if user erased it.
+      if (empty($property->is_new)) {
+        if (!empty($path['pid']) && empty($path['alias'])) {
+          path_delete($path['pid']);
+        }
+      }
+
+      // Only save a non-empty alias.
+      if (!empty($path['alias'])) {
+        // Ensure fields for programmatic executions.
+        $langcode = entity_language('roomify_property', $property);
+
+        $path['source'] = $uri['path'];
+        $path['language'] = isset($langcode) ? $langcode : LANGUAGE_NONE;
+
+        path_save($path);
+      }
+    }
+  }
+
+  /**
+   * Removes property path alias upon deletion.
+   *
+   * @param RoomifyProperty $property
+   *   The property being deleted.
+   */
+  public function deletePath(RoomifyProperty $property) {
+    $uri = $property->uri();
+    path_delete(array('source' => $uri['path']));
+  }
+
+}
+
+/**
+ * The Controller for RoomifyPropertyType entities.
+ */
+class RoomifyPropertyTypeController extends EntityAPIControllerExportable {
+
+  /**
+   *
+   */
+  public function __construct($entityType) {
+    parent::__construct($entityType);
+  }
+
+  /**
+   *
+   */
+  public function create(array $values = array()) {
+    $values += array(
+      'id' => '',
+      'is_new' => TRUE,
+      'data' => '',
+    );
+
+    $property_type = parent::create($values);
+
+    return $property_type;
+  }
+
+}
+
+/**
+ *
+ */
+function roomify_property_type_access() {
+  return TRUE;
+}
+
+/**
+ * Create a property object.
+ */
+function roomify_property_create($values = array()) {
+  return entity_get_controller('roomify_property')->create($values);
+}
+
+/**
+ * Create a property type object.
+ */
+function roomify_property_type_create($values = array()) {
+  return entity_get_controller('roomify_property_type')->create($values);
+}
+
+/**
+ * Menu argument loader; Load a property type by string.
+ *
+ * @param $type
+ *   The machine-readable name of a property type to load.
+ * @param bool $reset
+ *   A boolean indicating whether the internal cache should be reset.
+ *
+ * @return array|false
+ *   A property type array or FALSE if $type does not exist.
+ */
+function roomify_property_type_load($type, $reset = FALSE) {
+  return roomify_property_get_types($type, $reset);
+}
+
+/**
+ * Gets an array of all property types, keyed by the type name.
+ *
+ * @param string $type_name
+ *   If set, the type with the given name is returned.
+ * @param bool $reset
+ *   A boolean indicating that the internal cache should be reset.
+ *
+ * @return RoomifyPropertyType[]
+ *   Depending whether $type isset, an array of property types or a single one.
+ */
+function roomify_property_get_types($type_name = NULL, $reset = FALSE) {
+  // entity_load() will get the Entity controller for our property type
+  // entity and call the load function of that object.
+  $types = entity_load_multiple_by_name('roomify_property_type', isset($type_name) ? array($type_name) : FALSE);
+  return isset($type_name) ? reset($types) : $types;
+}
+
+/**
+ * Retrieve all property type labels.
+ *
+ * Ideally used for populating option lists.
+ *
+ * @return array
+ *   An array of RoomifyProperty labels, keyed by their machine names.
+ */
+function roomify_property_type_labels() {
+  $property_types = roomify_property_get_types();
+  foreach ($property_types as &$property_type) {
+    $property_type = $property_type->label();
+  }
+  return $property_types;
+}
+
+/**
+ * Saves a property type to the db.
+ *
+ * @param RoomifyPropertyType $property_type
+ *   The property type to save.
+ */
+function roomify_property_type_save(RoomifyPropertyType $property_type) {
+  $property_type->save();
+}
+
+/**
+ * Deletes a property type from the db.
+ */
+function roomify_property_type_delete(RoomifyPropertyType $bundle) {
+  $bundle->delete();
+}
+
+/**
+ * URI callback for Roomify Properties.
+ */
+function roomify_property_uri(RoomifyProperty $property) {
+  return array(
+    'path' => 'property/' . $property->property_id,
+  );
+}
+
+/**
+ * Fetches a property object.
+ *
+ * @param int $property_id
+ *   Integer specifying the property id.
+ * @param bool $reset
+ *   A boolean indicating whether the internal cache should be reset.
+ *
+ * @return RoomifyProperty|false
+ *   A fully-loaded $property object or FALSE if it cannot be loaded.
+ *
+ * @see roomify_property_load_multiple()
+ */
+function roomify_property_load($property_id, $reset = FALSE) {
+  $properties = roomify_property_load_multiple(array($property_id), array(), $reset);
+  return reset($properties);
+}
+
+/**
+ * @param $revision_id
+ */
+function roomify_property_load_revision($revision_id) {
+  return entity_revision_load('roomify_property', $revision_id);
+}
+
+/**
+ * @param RoomifyProperty $property
+ */
+function roomify_property_revision_list($property) {
+  $revisions = array();
+  $result = db_query('SELECT r.revision_id, r.name, r.log, r.revision_uid, n.revision_id AS current_vid, r.revision_timestamp, u.name FROM {roomify_properties_revision} r LEFT JOIN {roomify_properties} n ON n.revision_id = r.revision_id INNER JOIN {users} u ON u.uid = r.revision_uid WHERE r.property_id = :property_id ORDER BY r.revision_id DESC', array(':property_id' => $property->property_id));
+  foreach ($result as $revision) {
+    $revisions[$revision->revision_id] = $revision;
+  }
+
+  return $revisions;
+}
+
+/**
+ * Retrieve a list of revisions with a revision_id greater than the current.
+ *
+ * @param int $property_id
+ *   The property id to retrieve.
+ *
+ * @return array
+ *   An array of revisions (latest first), each containing revision_id, name and
+ *   bundle.
+ */
+function roomify_property_get_pending_revisions($property_id) {
+  $sql = "SELECT r.revision_id, r.name, n.type FROM {roomify_properties} n INNER JOIN {roomify_properties_revision} r ON n.property_id = r.property_id WHERE (r.revision_id > n.revision_id AND n.property_id = :property_id) ORDER BY r.revision_id DESC";
+  $result = db_query($sql, array(
+    ':property_id' => $property_id,
+  ));
+  $revisions = array();
+  foreach ($result as $revision) {
+    $revisions[$revision->revision_id] = $revision;
+  }
+  return $revisions;
+}
+
+/**
+ * Get the id of the current revision that the supplied property is pointing to.
+ *
+ * Used in cases where the property object wasn't fully loaded or was loaded
+ * with a different revision.
+ *
+ * @param int $property_id
+ *   The id of the property whose current revision id is to be returned.
+ *
+ * @return int
+ *   A single number being the current revision id (revision_id).
+ */
+function roomify_property_get_current_property_revision_id($property_id) {
+  $result = db_query("SELECT revision_id FROM {roomify_properties} WHERE property_id = :property_id", array(':property_id' => $property_id));
+  return $result->fetchField();
+}
+
+/**
+ * Loads multiple properties based on certain conditions.
+ *
+ * @param array $property_ids
+ *   An array of property IDs.
+ * @param array $conditions
+ *   An array of conditions to match against the {roomify_properties} table.
+ * @param bool $reset
+ *   A boolean indicating that the internal cache should be reset.
+ *
+ * @return array
+ *   An array of property objects, indexed by property_id.
+ *
+ * @see entity_load()
+ * @see roomify_property_load()
+ */
+function roomify_property_load_multiple($property_ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('roomify_property', $property_ids, $conditions, $reset);
+}
+
+/**
+ * Deletes a property.
+ *
+ * @param RoomifyProperty $property
+ *   The RoomifyProperty object that represents the property to delete.
+ */
+function roomify_property_delete(RoomifyProperty $property) {
+  $property->delete();
+}
+
+/**
+ * Deletes multiple properties.
+ *
+ * @param array $property_ids
+ *   An array of property IDs.
+ */
+function roomify_property_delete_multiple(array $property_ids) {
+  entity_get_controller('roomify_property')->delete($property_ids);
+}
+
+/**
+ * Implements hook_theme().
+ */
+function roomify_property_theme() {
+  return array(
+    'roomify_property_add_list' => array(
+      'variables' => array('content' => array()),
+      'file' => 'roomify_property.admin.inc',
+    ),
+  );
+}
+
+/**
+ * Add "Type" reference field.
+ */
+function roomify_property_add_bat_type_reference_field($type_bundle) {
+  field_info_cache_clear();
+
+  // "property_bat_type_reference" field.
+  if (field_read_field('property_bat_type_reference') === FALSE) {
+    $field = array(
+      'field_name' => 'property_bat_type_reference',
+      'type' => 'entityreference',
+      'cardinality' => -1,
+      'locked' => 1,
+      'settings' => array(
+        'target_type' => 'bat_type',
+      ),
+    );
+    field_create_field($field);
+  }
+
+  field_cache_clear();
+
+  // "property_bat_type_reference" field instance.
+  if (field_read_instance('roomify_property', 'property_bat_type_reference', $type_bundle) === FALSE) {
+    $instance = array(
+      'field_name' => 'property_bat_type_reference',
+      'entity_type' => 'roomify_property',
+      'label' => 'Type',
+      'bundle' => $type_bundle,
+      'required' => FALSE,
+      'widget' => array(
+        'type' => 'entityreference_autocomplete',
+      ),
+    );
+
+    // Check for IEF integration and use IEF widget if present.
+    $entity_info = entity_get_info('bat_type');
+    if (isset($entity_info['inline entity form'])) {
+      $instance['widget']['type'] = 'inline_entity_form';
+    }
+
+    // Create field instance.
+    field_create_instance($instance);
+  }
+}
+
+/**
+ * Implements hook_entity_insert().
+ */
+function roomify_property_entity_insert($entity, $type) {
+  global $user;
+
+  if ($type == 'roomify_property_type') {
+    roomify_property_add_bat_type_reference_field($entity->type);
+  }
+  if ($type == 'roomify_property') {
+    $types_reference = field_get_items($type, $entity, 'property_bat_type_reference');
+    foreach ($types_reference as $reference) {
+      $type_referenced = bat_type_load($reference['target_id']);
+      $bat_units = bat_unit_load_multiple(FALSE, array('type_id' => $type_referenced->type_id));
+      if (empty($bat_units)) {
+        $unit = bat_unit_create(array('type' => 'default'));
+        $unit->name = $type_referenced->name . ' 1';
+        $unit->created = !empty($unit->date) ? strtotime($unit->date) : REQUEST_TIME;
+
+        $unit->type_id = $type_referenced->type_id;
+        $unit->default_state = 1;
+        $unit->uid = $user->uid;
+        $unit->save();
+      }
+    }
+  }
+}
+
+/**
+ * Gets a list of Roomify Properties keyed by id and name in value.
+ */
+function roomify_property_ids($bundle = '') {
+  $properties = array();
+
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'roomify_property');
+
+  if ($bundle != '') {
+    $query->entityCondition('bundle', $bundle);
+  }
+
+  $result = $query->execute();
+
+  if (count($result) > 0) {
+    $entities = entity_load('roomify_property', array_keys($result['roomify_property']));
+    foreach ($entities as $type) {
+      $wrapper = entity_metadata_wrapper('roomify_property', $type);
+      $properties[$wrapper->property_id->value()] = $wrapper->name->value();
+    }
+  }
+
+  return $properties;
+}
+
+/**
+ * Implements hook_views_pre_render().
+ */
+function roomify_property_views_pre_render(&$view) {
+  // Hide "Add Types" button if this is a Casa.
+  if ($view->name == 'property_types') {
+    if (count($view->result) == 1 && $view->result[0]->bat_types_type == 'home') {
+      unset($view->header['area']);
+    }
+    elseif (isset($view->header['area'])) {
+      $link_text = 'add types';
+      if (variable_get('install_profile', '') == 'roomify_for_spaces') {
+        $link_text = 'add spaces';
+      }
+      $view->header['area']->options['content'] = l(t('@text', array('@text' => $link_text)), 'admin/bat/config/type/wizard/' . $view->args[0] . '/nojs', array('attributes' => array('class' => 'button add-type-button ctools-use-modal ctools-modal-roomify-dashboard-modal-style')));
+    }
+  }
+}
+
+/**
+ * Callback for Add property wizard.
+ */
+function roomify_property_wizard($ajax) {
+  if ($ajax) {
+    ctools_include('ajax');
+    ctools_include('modal');
+
+    $form_state = array(
+      'ajax' => TRUE,
+      'title' => t('Add New Property'),
+    );
+
+    // Use ctools to generate ajax instructions for the browser to create
+    // a form in a modal popup.
+    $output = ctools_modal_form_wrapper('roomify_property_wizard_form', $form_state);
+
+    // If the form has been submitted, there may be additional instructions
+    // such as dismissing the modal popup.
+    if (!empty($form_state['ajax_commands'])) {
+      $output = $form_state['ajax_commands'];
+    }
+
+    // Return the ajax instructions to the browser via ajax_render().
+    print ajax_render($output);
+    drupal_exit();
+  }
+  else {
+    return drupal_get_form('roomify_property_wizard_form');
+  }
+}
+
+/**
+ * Roomify Add Property Wizard form main callback.
+ */
+function roomify_property_wizard_form($form, &$form_state) {
+  // Initialize a description of the steps for the wizard.
+  if (empty($form_state['step'])) {
+    $form_state['step'] = 1;
+
+    // This array contains the function to be called at each step to get the
+    // relevant form elements. It will also store state information for each
+    // step.
+    $form_state['step_information'] = _roomify_property_wizard_steps();
+  }
+  $step = &$form_state['step'];
+  drupal_set_title(t('Add Property: Step !step', array('!step' => $step)));
+
+  // Call the function named in $form_state['step_information'] to get the
+  // form elements to display for this step.
+  $form = $form_state['step_information'][$step]['form']($form, $form_state);
+
+  // Show the 'previous' button if appropriate. Note that #submit is set to
+  // a special submit handler, and that we use #limit_validation_errors to
+  // skip all complaints about validation when using the back button. The
+  // values entered will be discarded, but they will not be validated, which
+  // would be annoying in a "back" button.
+  if ($step > 1) {
+    $form['prev'] = array(
+      '#type' => 'submit',
+      '#value' => t('Previous'),
+      '#name' => 'prev',
+      '#submit' => array('roomify_property_wizard_form_previous_submit'),
+      '#limit_validation_errors' => array(),
+    );
+  }
+
+  // Show the Next button only if there are more steps defined.
+  if ($step < count($form_state['step_information'])) {
+    // The Next button should be included on every step.
+    $form['next'] = array(
+      '#type' => 'submit',
+      '#value' => t('Next'),
+      '#name' => 'next',
+      '#submit' => array('roomify_property_wizard_form_next_submit'),
+      '#states' => array(
+        'disabled' => array(
+          array(
+            array(':input[name="property_type"]' => array('value' => FALSE)),
+            'or',
+            array(':input[name="property_name"]' => array('value' => '')),
+          ),
+        ),
+      ),
+    );
+  }
+  else {
+    // Just in case there are no more steps, we use the default submit handler
+    // of the form wizard. Call this button Finish, Submit, or whatever you
+    // want to show. When this button is clicked, the
+    // form_example_wizard_submit handler will be called.
+    $form['finish'] = array(
+      '#type' => 'submit',
+      '#value' => t('create property and add details'),
+      '#suffix' => '<div class="clearfix"> </div>',
+      '#states' => array(
+        'disabled' => array(
+          array(
+            array(':input[name="default_price"]' => array('value' => '')),
+            'or',
+            array(':input[name="max_occupants"]' => array('value' => '')),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Include each validation function defined for the different steps.
+  if (function_exists($form_state['step_information'][$step]['form'] . '_validate')) {
+    $form['next']['#validate'] = array($form_state['step_information'][$step]['form'] . '_validate');
+  }
+
+  return $form;
+}
+
+/**
+ * Submit handler for the "previous" button.
+ */
+function roomify_property_wizard_form_previous_submit($form, &$form_state) {
+  $current_step = &$form_state['step'];
+  $form_state['step_information'][$current_step]['stored_values'] = $form_state['values'];
+  if ($current_step > 1) {
+    $current_step--;
+    $form_state['values'] = $form_state['step_information'][$current_step]['stored_values'];
+  }
+  $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * Submit handler for the 'next' button.
+ */
+function roomify_property_wizard_form_next_submit($form, &$form_state) {
+  $current_step = &$form_state['step'];
+  $form_state['step_information'][$current_step]['stored_values'] = $form_state['values'];
+
+  if ($current_step < count($form_state['step_information'])) {
+    $current_step++;
+    if (!empty($form_state['step_information'][$current_step]['stored_values'])) {
+      $form_state['values'] = $form_state['step_information'][$current_step]['stored_values'];
+    }
+    else {
+      $form_state['values'] = array();
+    }
+    // Force rebuild with next step.
+    $form_state['rebuild'] = TRUE;
+    return;
+  }
+}
+
+/**
+ * Returns form elements for the 'property name' page of the wizard.
+ */
+function roomify_property_wizard_form_property_name($form, &$form_state) {
+  $form = array();
+
+  $form['#attached']['js'] = array(
+    drupal_get_path('module', 'roomify_dashboard') . '/js/roomify_dashboard_modal.js',
+  );
+  $form['#attached']['css'] = array(
+    drupal_get_path('module', 'roomify_property') . '/css/property_name.css',
+  );
+
+  $form['property_name'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Property Name'),
+    '#default_value' => !empty($form_state['values']['property_name']) ? $form_state['values']['property_name'] : '',
+    '#required' => TRUE,
+  );
+
+  // Get available types.
+  $types = roomify_property_get_types();
+  $options = array();
+  foreach ($types as $type) {
+    if ($type->type == 'casa_property') {
+      $options[$type->type] = t('Single-Unit (entire home)');
+    }
+    elseif ($type->type == 'locanda_property') {
+      $options[$type->type] = t('Multi-Unit (multiple rooms / types within a property)');
+    }
+    else {
+      $options[$type->type] = $type->label;
+    }
+  }
+
+  $form['property_type'] = array(
+    '#type' => 'radios',
+    '#options' => $options,
+    '#required' => TRUE,
+  );
+
+  // Hide property type radios if there's only one choice.
+  if (count($options) == 1) {
+    $form['property_type']['#access'] = FALSE;
+    $form['property_type']['#default_value'] = current(array_keys($options));
+  }
+
+  return $form;
+}
+
+/**
+ * Returns form elements for the 'type info' page of the wizard.
+ */
+function roomify_property_wizard_form_type_info($form, &$form_state) {
+  $form['property_title'] = array(
+    '#markup' => '<h2>' . $form_state['step_information'][1]['stored_values']['property_name'] . '</h2>'
+  );
+
+  // Change the form elements we provide based on the property type.
+  switch ($form_state['step_information'][1]['stored_values']['property_type']) {
+    case 'casa_property':
+      $form['#attached']['css'][] = drupal_get_path('module', 'roomify_property') . '/css/property_type_casa.css';
+      $form['container'] = array(
+        '#type' => 'container',
+        '#attributes' => array(
+          'class' => array('container-inline'),
+        ),
+      );
+      $form['container']['max_occupants'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Max Occupants'),
+        '#size' => 2,
+        '#required' => TRUE,
+        '#default_value' => !empty($form_state['values']['max_occupants']) ? $form_state['values']['max_occupants'] : '',
+        '#element_validate' => array('element_validate_integer_positive'),
+      );
+      $form['container']['default_price'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Default Price Per Night'),
+        '#size' => 4,
+        '#required' => TRUE,
+        '#default_value' => !empty($form_state['values']['default_price']) ? $form_state['values']['default_price'] : '',
+        '#element_validate' => array('element_validate_number'),
+      );
+
+      break;
+
+    case 'locanda_property':
+      $form['#attached']['css'][] = drupal_get_path('module', 'roomify_property') . '/css/property_type_locanda.css';
+      // Because we have many fields with the same values, we have to set
+      // #tree to be able to access them.
+      $form['#tree'] = TRUE;
+      $form['types_container'] = array(
+        '#type' => 'container',
+        '#title' => t('Define Room Types'),
+        '#prefix' => '<div id="types-container-wrapper">',
+        '#suffix' => '</div>',
+      );
+
+      // Build the fieldset with the proper number of types. We'll use
+      // $form_state['num_types'] to determine the number of fields to build.
+      if (empty($form_state['num_types'])) {
+        $form_state['num_types'] = 1;
+      }
+      for ($i = 0; $i < $form_state['num_types']; $i++) {
+        $form['types_container'][$i] = array(
+          '#type' => 'container',
+          '#attributes' => array(
+            'class' => array('container-inline'),
+          ),
+          '#prefix' => '<div class="type-container" id="type-container-' . $i . '">',
+          '#suffix' => '</div>',
+        );
+
+        $form['types_container'][$i]['name'] = array(
+          '#type' => 'textfield',
+          '#size' => '20',
+          '#title' => t('Type Name'),
+        );
+        $form['types_container'][$i]['rooms'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Number of Rooms'),
+          '#size' => 2,
+          '#element_validate' => array('element_validate_integer_positive'),
+        );
+        $form['types_container'][$i]['default_price'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Default Price Per Night'),
+          '#size' => 4,
+          '#element_validate' => array('element_validate_number'),
+        );
+        $form['types_container'][$i]['max_occupancy'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Max Occupancy'),
+          '#size' => 2,
+          '#element_validate' => array('element_validate_integer_positive'),
+        );
+      }
+
+      $form['types_container']['add_type'] = array(
+        '#type' => 'submit',
+        '#value' => t('add another type'),
+        '#submit' => array('roomify_property_wizard_form_add_one'),
+      );
+
+      if ($form_state['num_types'] > 1) {
+        $form['types_container']['remove_name'] = array(
+          '#type' => 'submit',
+          '#value' => t('remove a type'),
+          '#submit' => array('roomify_property_wizard_form_remove_one'),
+        );
+      }
+
+      break;
+
+    case 'space_property':
+      $form['#attached']['css'][] = drupal_get_path('module', 'roomify_property') . '/css/property_type_space.css';
+      // Because we have many fields with the same values, we have to set
+      // #tree to be able to access them.
+      $form['#tree'] = TRUE;
+      $form['types_container'] = array(
+        '#type' => 'container',
+        '#title' => t('Define Space Types'),
+        '#prefix' => '<div id="types-container-wrapper">',
+        '#suffix' => '</div>',
+      );
+
+      // Build the fieldset with the proper number of types. We'll use
+      // $form_state['num_types'] to determine the number of fields to build.
+      if (empty($form_state['num_types'])) {
+        $form_state['num_types'] = 1;
+      }
+      for ($i = 0; $i < $form_state['num_types']; $i++) {
+        $form['types_container'][$i] = array(
+          '#type' => 'container',
+          '#attributes' => array(
+            'class' => array('container-inline'),
+          ),
+          '#prefix' => '<div class="type-container" id="type-container-' . $i . '">',
+          '#suffix' => '</div>',
+        );
+
+        $form['types_container'][$i]['name'] = array(
+          '#type' => 'textfield',
+          '#size' => 20,
+          '#title' => t('Space Name'),
+          '#required' => TRUE,
+        );
+        $form['types_container'][$i]['rooms'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Number of Units'),
+          '#size' => 2,
+          '#required' => TRUE,
+          '#element_validate' => array('element_validate_integer_positive'),
+        );
+        $form['types_container'][$i]['default_price'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Default Price'),
+          '#size' => 4,
+          '#element_validate' => array('element_validate_number'),
+        );
+        $form['types_container'][$i]['max_occupancy'] = array(
+          '#type' => 'textfield',
+          '#title' => t('Space Capacity'),
+          '#size' => 4,
+          '#required' => TRUE,
+          '#element_validate' => array('element_validate_integer_positive'),
+        );
+        $form['types_container'][$i]['standard_duration'] = array(
+          '#type' => 'interval',
+          '#size' => 10,
+          '#title' => t('Standard Duration'),
+          '#required' => TRUE,
+        );
+        $form['types_container'][$i]['minimum_duration'] = array(
+          '#type' => 'interval',
+          '#size' => 10,
+          '#title' => t('Minimum Duration'),
+          '#required' => TRUE,
+        );
+        $form['types_container'][$i]['maximum_duration'] = array(
+          '#type' => 'interval',
+          '#size' => 10,
+          '#title' => t('Maximum Duration'),
+          '#required' => TRUE,
+        );
+        // Opening Time informations.
+        $form['types_container'][$i]['opening_hours'] = array(
+          '#type' => 'container',
+          '#prefix' => '<h5 style="font-weight:bold;margin-bottom:5px">' . t('Opening Times') . '</h5>
+            <h6 class="descrition" style="margin-bottom:5px">' . t('Define when this space is open, you may edit and add more opening details after the creation.') . '</h6>',
+          '#attributes' => array(
+            'class' => array('container-inline'),
+          ),
+        );
+        $form['types_container'][$i]['opening_hours']['opening_hour'] = array(
+          '#type' => 'select',
+          '#title' => t('Opening Hour'),
+          '#options' => range(0, 23),
+          '#default_value' => '9',
+          '#required' => TRUE,
+        );
+        $form['types_container'][$i]['opening_hours']['opening_minute'] = array(
+          '#type' => 'select',
+          '#options' => array(
+            '00' => '00',
+            '15' => '15',
+            '30' => '30',
+            '45' => '45',
+          ),
+          '#default_value' => '00',
+          '#required' => TRUE,
+        );
+        $form['types_container'][$i]['opening_hours']['closing_hour'] = array(
+          '#type' => 'select',
+          '#title' => t('Closing Hour'),
+          '#options' => range(0, 23),
+          '#default_value' => '18',
+          '#required' => TRUE,
+        );
+        $form['types_container'][$i]['opening_hours']['closing_minute'] = array(
+          '#type' => 'select',
+          '#options' => array(
+            '00' => '00',
+            '15' => '15',
+            '30' => '30',
+            '45' => '45',
+          ),
+          '#default_value' => '00',
+          '#required' => TRUE,
+        );
+        // Day options to display in our checkboxes.
+        $days = array(
+          0 => t('Sun'),
+          1 => t('Mon'),
+          2 => t('Tue'),
+          3 => t('Wed'),
+          4 => t('Thu'),
+          5 => t('Fri'),
+          6 => t('Sat'),
+        );
+        $form['types_container'][$i]['opening_hours']['days'] = array(
+          '#title' => t('Opening Days'),
+          '#type' => 'checkboxes',
+          '#options' => $days,
+          '#required' => TRUE,
+          '#default_value' => array(1, 2, 3, 4, 5),
+        );
+      }
+
+      $form['types_container']['add_type'] = array(
+        '#type' => 'submit',
+        '#value' => t('add another space'),
+        '#submit' => array('roomify_property_wizard_form_add_one'),
+      );
+
+      if ($form_state['num_types'] > 1) {
+        $form['types_container']['remove_name'] = array(
+          '#type' => 'submit',
+          '#value' => t('remove a space'),
+          '#submit' => array('roomify_property_wizard_form_remove_one'),
+        );
+      }
+
+      break;
+  }
+
+  return $form;
+}
+
+/**
+ * Validation handler for type info form step
+ */
+function roomify_property_wizard_form_validate($form, &$form_state) {
+  // Ensure that all values are set for each type.
+  if (isset($form_state['input']['types_container'])) {
+    $type_fields = array('name', 'rooms', 'default_price', 'max_occupancy');
+    $types = $form_state['input']['types_container'];
+    for ($i = 0; $i < count($types['name']); $i++) {
+      $check_fields = FALSE;
+      foreach ($type_fields as $field) {
+        if (strlen($types[$field][$i])) {
+          $check_fields = TRUE;
+        }
+      }
+
+      // At least one field was filled in for this type, ensure all fields were filled in.
+      if ($check_fields) {
+        foreach ($type_fields as $field) {
+          if (!strlen($types[$field][$i])) {
+            form_set_error('types_container][' . $field . '][' . $i, t('Please enter a value for all fields'));
+          }
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Add another type form line.
+ */
+function roomify_property_wizard_form_add_one($form, &$form_state) {
+  $current_step = 2;
+  $form_state['step_information'][$current_step]['stored_values'] = $form_state['values'];
+
+  if (!empty($form_state['step_information'][$current_step]['stored_values'])) {
+    $form_state['values'] = $form_state['step_information'][$current_step]['stored_values'];
+  }
+  else {
+    $form_state['values'] = array();
+  }
+
+  $form_state['num_types']++;
+  // Force rebuild with next step.
+  $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * Remove a type form line.
+ */
+function roomify_property_wizard_form_remove_one($form, &$form_state) {
+  $current_step = 2;
+  $form_state['step_information'][$current_step]['stored_values'] = $form_state['values'];
+
+  if (!empty($form_state['step_information'][$current_step]['stored_values'])) {
+    $form_state['values'] = $form_state['step_information'][$current_step]['stored_values'];
+  }
+  else {
+    $form_state['values'] = array();
+  }
+
+  $form_state['num_types']--;
+  // Force rebuild with next step.
+  $form_state['rebuild'] = TRUE;
+}
+
+/**
+ * Roomify add a Property wizard form submit handler.
+ */
+function roomify_property_wizard_form_submit($form, &$form_state) {
+  global $user;
+
+  $current_step = &$form_state['step'];
+  $form_state['step_information'][$current_step]['stored_values'] = $form_state['values'];
+
+  // In this case we've completed the final page of the wizard, so process the
+  // submitted information.
+  $property_name = $form_state['step_information'][1]['stored_values']['property_name'];
+  $property_type = $form_state['step_information'][1]['stored_values']['property_type'];
+
+  if ($property_id = $form_state['step_information'][1]['stored_values']['property_id']) {
+    $property = roomify_property_load($property_id);
+  }
+  else {
+    $property = roomify_property_create(
+      array(
+        'name' => $property_name,
+        'type' => $property_type,
+        'uid' => $user->uid,
+        'created' => REQUEST_TIME,
+        'language' => language_default('language'),
+      )
+    );
+  }
+
+  switch ($property_type) {
+    case 'casa_property':
+      $type = bat_type_create(
+        array(
+          'name' => 'Home',
+          'type' => 'home',
+          'uid' => $user->uid,
+          'created' => REQUEST_TIME,
+        )
+      );
+
+      $type->field_st_max_capacity[LANGUAGE_NONE][0]['value'] = $form_state['step_information'][2]['stored_values']['max_occupants'];
+      $type->field_st_default_price[LANGUAGE_NONE][0]['amount'] = $form_state['step_information'][2]['stored_values']['default_price'] * 100;
+      $type->field_st_default_price[LANGUAGE_NONE][0]['currency_code'] = commerce_default_currency();
+
+      $type->save();
+
+      $property->property_bat_type_reference[LANGUAGE_NONE][0]['target_id'] = $type->type_id;
+
+      break;
+
+    case 'locanda_property':
+      $type_values = $form_state['step_information'][2]['stored_values']['types_container'];
+      // Remove form values that aren't type info.
+      foreach ($type_values as $index => $type_value) {
+        if (!is_array($type_value)) {
+          unset($type_values[$index]);
+        }
+      }
+
+      $type_ids = array();
+      for ($i = 0; $i < count($type_values); $i++) {
+        if ($type_values[$i]['name'] != '' && $type_values[$i]['max_occupancy'] != '' &&
+            $type_values[$i]['default_price'] != '' && $type_values[$i]['rooms'] != '') {
+          // Create type.
+          $type = bat_type_create(
+            array(
+              'name' => $type_values[$i]['name'],
+              'type' => 'room',
+              'uid' => $user->uid,
+              'created' => REQUEST_TIME,
+            )
+          );
+
+          $type->field_st_max_capacity[LANGUAGE_NONE][0]['value'] = $type_values[$i]['max_occupancy'];
+          $type->field_st_default_price[LANGUAGE_NONE][0]['amount'] = $type_values[$i]['default_price'] * 100;
+          $type->field_st_default_price[LANGUAGE_NONE][0]['currency_code'] = commerce_default_currency();
+
+          $type->save();
+
+          $type_ids[] = $type->type_id;
+
+          // Create units for this type.
+          for ($j = 0; $j < $type_values[$i]['rooms']; $j++) {
+            $unit = bat_unit_create(array('type' => 'default'));
+
+            $unit->name = $type->name . ' ' . ($j + 1);
+            $unit->created = !empty($unit->date) ? strtotime($unit->date) : REQUEST_TIME;
+            $unit->type_id = $type->type_id;
+            $unit->default_state = 1;
+            $unit->uid = $user->uid;
+
+            $unit->save();
+          }
+        }
+      }
+
+      foreach ($type_ids as $type_id) {
+        $property->property_bat_type_reference[LANGUAGE_NONE][]['target_id'] = $type_id;
+      }
+
+      break;
+
+    case 'space_property':
+      $type_values = $form_state['step_information'][2]['stored_values']['types_container'];
+      // Remove form values that aren't type info.
+      foreach ($type_values as $index => $type_value) {
+        if (!is_array($type_value)) {
+          unset($type_values[$index]);
+        }
+      }
+
+      $type_ids = array();
+      for ($i = 0; $i < count($type_values); $i++) {
+        if ($type_values[$i]['name'] != '' && $type_values[$i]['rooms'] != '' && $type_values[$i]['max_occupancy'] != '' && $type_values[$i]['standard_duration'] != '' && $type_values[$i]['minimum_duration'] && $type_values[$i]['maximum_duration'] != '' && $type_values[$i]['opening_hours'] != '') {
+          // Create type.
+          $type = bat_type_create(
+            array(
+              'name' => $type_values[$i]['name'],
+              'type' => 'space',
+              'uid' => $user->uid,
+              'created' => REQUEST_TIME,
+            )
+          );
+
+          $type->space_capacity[LANGUAGE_NONE][0]['value'] = $type_values[$i]['max_occupancy'];
+
+          $type->space_default_price[LANGUAGE_NONE][0]['amount'] = ($type_values[$i]['default_price'] != '') ? $type_values[$i]['default_price'] * 100 : 0;
+          $type->space_default_price[LANGUAGE_NONE][0]['currency_code'] = commerce_default_currency();
+
+          $type->space_standard_duration[LANGUAGE_NONE][0]['interval'] = $type_values[$i]['standard_duration']['interval'];
+          $type->space_standard_duration[LANGUAGE_NONE][0]['period'] = $type_values[$i]['standard_duration']['period'];
+
+          $type->space_minimum_duration[LANGUAGE_NONE][0]['interval'] = $type_values[$i]['minimum_duration']['interval'];
+          $type->space_minimum_duration[LANGUAGE_NONE][0]['period'] = $type_values[$i]['minimum_duration']['period'];
+
+          $type->space_maximum_duration[LANGUAGE_NONE][0]['interval'] = $type_values[$i]['maximum_duration']['interval'];
+          $type->space_maximum_duration[LANGUAGE_NONE][0]['period'] = $type_values[$i]['maximum_duration']['period'];
+
+          $opening_time = $type_values[$i]['opening_hours']['opening_hour'] . $type_values[$i]['opening_hours']['opening_minute'];
+          $closing_time = $type_values[$i]['opening_hours']['closing_hour'] . $type_values[$i]['opening_hours']['closing_minute'];
+          foreach ($type_values[$i]['opening_hours']['days'] as $day => $enabled) {
+            if ($enabled != '0') {
+              $type->space_opening_time[LANGUAGE_NONE][] = array(
+                'day' => $day,
+                'starthours' => $opening_time,
+                'endhours' => $closing_time,
+              );
+            }
+          }
+
+          $type->save();
+
+          $type_ids[] = $type->type_id;
+
+          // Create units for this type.
+          for ($j = 0; $j < $type_values[$i]['rooms']; $j++) {
+            $unit = bat_unit_create(array('type' => 'default'));
+
+            $unit->name = $type->name . ' ' . ($j + 1);
+            $unit->created = !empty($unit->date) ? strtotime($unit->date) : REQUEST_TIME;
+            $unit->type_id = $type->type_id;
+            $unit->default_state = 1;
+            $unit->uid = $user->uid;
+
+            $unit->save();
+          }
+        }
+      }
+
+      foreach ($type_ids as $type_id) {
+        $property->property_bat_type_reference[LANGUAGE_NONE][]['target_id'] = $type_id;
+        $property->property_space[LANGUAGE_NONE][]['type_id'] = $type_id;
+      }
+
+      break;
+
+    default:
+      $type_values = $form_state['step_information'][2]['stored_values']['types_container'];
+      // Remove form values that aren't type info.
+      foreach ($type_values as $index => $type_value) {
+        if (!is_array($type_value)) {
+          unset($type_values[$index]);
+        }
+      }
+
+      $type_ids = array();
+      for ($i = 0; $i < count($type_values); $i++) {
+        if ($type_values[$i]['name'] != '' && $type_values[$i]['max_occupancy'] != '' &&
+            $type_values[$i]['default_price'] != '' && $type_values[$i]['rooms'] != '') {
+          // Create type.
+          $type = bat_type_create(
+            array(
+              'name' => $type_values[$i]['name'],
+              'type' => 'room',
+              'uid' => $user->uid,
+              'created' => REQUEST_TIME,
+            )
+          );
+
+          $type->save();
+
+          $type_ids[] = $type->type_id;
+        }
+      }
+
+      foreach ($type_ids as $type_id) {
+        $property->property_bat_type_reference[LANGUAGE_NONE][]['target_id'] = $type_id;
+      }
+  }
+
+  $property->save();
+
+  // Close the modal.
+  ctools_add_js('ajax-responder');
+  $form_state['ajax_commands'][] = ctools_modal_command_dismiss();
+
+  // Redirect user to property page.
+  $options = array('query' => array('destination' => 'user'));
+  if (!empty($form_state['#redirect'])) {
+    $path = $form_state['#redirect'];
+  }
+  else {
+    $path = 'admin/bat/config/property/manage/' . $property->property_id;
+  }
+  $form_state['ajax_commands'][] = ctools_ajax_command_redirect($path, 0, $options);
+}
+
+/**
+ * Returns the list of steps and their associated forms.
+ *
+ * @return array
+ *   List of steps and their forms.
+ */
+function _roomify_property_wizard_steps() {
+  return array(
+    1 => array(
+      'form' => 'roomify_property_wizard_form_property_name',
+    ),
+    2 => array(
+      'form' => 'roomify_property_wizard_form_type_info',
+    ),
+  );
+}
+
+/**
+ * Callback for Add type wizard.
+ */
+function roomify_type_wizard($property, $ajax) {
+  if ($ajax) {
+    ctools_include('ajax');
+    ctools_include('modal');
+
+    $form_state = array(
+      'ajax' => TRUE,
+      'title' => t('Add New Type'),
+    );
+
+    $form_state['step'] = 2;
+
+    $form_state['step_information'][1]['stored_values']['property_type'] = $property->type;
+    $form_state['step_information'][1]['stored_values']['property_id'] = $property->property_id;
+    $form_state['step_information'][1]['stored_values']['property_name'] = $property->name;
+
+    $form_state['#redirect'] = 'admin/bat/config/property/manage/' . $property->property_id . '/types';
+
+    // Use ctools to generate ajax instructions for the browser to create
+    // a form in a modal popup.
+    $output = ctools_modal_form_wrapper('roomify_type_wizard_form', $form_state);
+
+    // If the form has been submitted, there may be additional instructions
+    // such as dismissing the modal popup.
+    if (!empty($form_state['ajax_commands'])) {
+      $output = $form_state['ajax_commands'];
+    }
+
+    // Return the ajax instructions to the browser via ajax_render().
+    print ajax_render($output);
+    drupal_exit();
+  }
+  else {
+    return drupal_get_form('roomify_type_wizard_form');
+  }
+}
+
+/**
+ * Roomify Add Type Wizard form main callback.
+ */
+function roomify_type_wizard_form($form, &$form_state) {
+  drupal_set_title(t('Add Types'));
+
+  // Call the function named in $form_state['step_information'] to get the
+  // form elements to display for this step.
+  $form = roomify_property_wizard_form_type_info($form, $form_state);
+
+  $form['#submit'] = array('roomify_property_wizard_form_submit');
+  $form['finish'] = array(
+    '#type' => 'submit',
+    '#value' => t('Add types'),
+    '#suffix' => '<div class="clearfix"> </div>',
+  );
+
+  return $form;
+}
+
+/**
+ * Implements hook_entity_presave().
+ */
+function roomify_property_entity_presave($entity, $type) {
+  if ($type == 'roomify_property') {
+    $types_reference = field_get_items($type, $entity, 'property_bat_type_reference');
+
+    foreach ($types_reference as $reference) {
+      $type_referenced = bat_type_load($reference['target_id']);
+
+      // Sync Type author with Property author.
+      if ($type_referenced->uid != $entity->uid) {
+        $type_referenced->uid = $entity->uid;
+        $type_referenced->save();
+      }
+
+      $units = bat_unit_load_multiple(FALSE, array('type_id' => $type_referenced->type_id));
+      foreach ($units as $unit) {
+        // Sync Unit author with Property author.
+        if ($unit->uid != $entity->uid) {
+          $unit->uid = $entity->uid;
+          $unit->save();
+        }
+      }
+    }
+  }
+}
+
+/**
+ * @param $op
+ * @param $property
+ */
+function roomify_property_revisioning_event($op, $property) {
+  switch ($op) {
+    case 'post update':
+      if (module_exists('rules')) {
+        rules_invoke_event('roomify_property_revisioning_post_update', $property);
+      }
+      break;
+
+    case 'pre publish':
+      if (module_exists('rules')) {
+        rules_invoke_event('roomify_property_revisioning_pre_publish', $property);
+      }
+      break;
+
+    case 'post publish':
+      if (module_exists('rules')) {
+        rules_invoke_event('roomify_property_revisioning_post_publish', $property);
+      }
+      break;
+
+    case 'post unpublish':
+      if (module_exists('rules')) {
+        rules_invoke_event('roomify_property_revisioning_post_unpublish', $property);
+      }
+      break;
+
+    case 'pre revert':
+      if (module_exists('rules')) {
+        rules_invoke_event('roomify_property_revisioning_pre_revert', $property);
+      }
+      break;
+
+    case 'post revert':
+      if (module_exists('rules')) {
+        rules_invoke_event('roomify_property_revisioning_post_revert', $property);
+      }
+      break;
+
+    case 'pre delete':
+      if (module_exists('rules')) {
+        rules_invoke_event('roomify_property_revisioning_pre_delete', $property);
+      }
+
+    case 'post delete':
+      if (module_exists('rules')) {
+        rules_invoke_event('roomify_property_revisioning_post_delete', $property);
+      }
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * FORM_ID = bat_type_edit_form.
+ */
+function roomify_property_form_bat_type_edit_form_alter(&$form, &$form_state) {
+  if (isset($form['actions']['delete'])) {
+    $form['actions']['delete']['#submit'] = array_merge(array('roomify_property_form_bat_type_edit_form_delete_submit'), $form['actions']['delete']['#submit']);
+  }
+}
+
+/**
+ * Redirect user to the property edit page of the type that are deleting.
+ */
+function roomify_property_form_bat_type_edit_form_delete_submit($form, &$form_state) {
+  $type = $form_state['bat_type'];
+
+  if (isset($type->field_st_property_reference[LANGUAGE_NONE][0]['target_id'])) {
+    $_GET['destination'] = 'admin/bat/config/property/manage/' . $type->field_st_property_reference[LANGUAGE_NONE][0]['target_id'];
+  }
+}
+
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * FORM_ID = roomify_property_operation_form.
+ */
+function roomify_property_form_roomify_property_operation_form_alter(&$form, &$form_state) {
+  if (module_exists('bat_booking')) {
+    $form['#validate'][] = 'roomify_property_form_roomify_property_operation_delete_validate';
+  }
+
+  $form['#submit'][] = 'roomify_property_form_roomify_property_operation_delete_submit';
+}
+
+/**
+ * Custom callback - redirects user to /user following a property delete action.
+ */
+function roomify_property_form_roomify_property_operation_delete_submit($form, &$form_state) {
+  $form_state['redirect'] = 'user';
+}
+
+/**
+ * Custom callback - check if there are associated bookings.
+ */
+function roomify_property_form_roomify_property_operation_delete_validate($form, &$form_state) {
+  $types = array();
+
+  $property = $form_state['roomify_property'];
+  if (isset($property->property_bat_type_reference[LANGUAGE_NONE])) {
+    foreach ($property->property_bat_type_reference[LANGUAGE_NONE] as $type) {
+      $types[] = $type['target_id'];
+    }
+  }
+
+  if (!empty($types)) {
+    $query = db_select('bat_bookings', 'b');
+    $query->join('field_data_booking_event_reference', 'e', 'e.entity_id = b.booking_id');
+    $query->join('field_data_event_bat_unit_reference', 'u', 'e.booking_event_reference_target_id = u.entity_id');
+    $query->join('bat_units', 'units', 'u.event_bat_unit_reference_target_id = units.unit_id');
+
+    $query->fields('b', array('booking_id'));
+
+    $query->condition('units.type_id', $types, 'IN');
+
+    $results = $query->execute()->fetchAll();
+
+    if (!empty($results)) {
+      $items['items'] = array();
+
+      foreach ($results as $booking_id) {
+        $items['items'][] = l(t('Booking @booking_id', array('@booking_id' => $booking_id->booking_id)), 'admin/bat/config/booking/manage/' . $booking_id->booking_id, array('query' => array('destination' => current_path())));
+      }
+
+      form_set_error('', t('Cannot delete this property because there are associated bookings. Please either re-assign bookings or delete them.'));
+
+      drupal_set_message(theme('item_list', $items), 'error');
+    }
+  }
+}
+
+/**
+ * 'Manage Rooms' title callback.
+ */
+function roomify_property_types_title_callback($property) {
+  if ($property->type == 'casa_property') {
+    return t('Manage House');
+  }
+  elseif ($property->type == 'locanda_property') {
+    return t('Manage Rooms');
+  }
+  elseif ($property->type == 'space_property') {
+    return t('Manage Space types');
+  }
+  else {
+    return t('Manage Units');
+  }
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function roomify_property_entity_delete($entity, $type) {
+  if ($type == 'roomify_property') {
+    if (isset($entity->property_bat_type_reference[LANGUAGE_NONE])) {
+      foreach ($entity->property_bat_type_reference[LANGUAGE_NONE] as $type) {
+        $bat_type = bat_type_load($type['target_id']);
+        $bat_type->delete();
+      }
+    }
+  }
+}
+
+/**
+ * Menu title callback for showing individual entities.
+ */
+function roomify_property_page_title(RoomifyProperty $property) {
+  return $property->name;
+}
+
+/**
+ * Sets up content to show an individual property.
+ */
+function roomify_property_page_view($property, $view_mode = 'full') {
+  $controller = entity_get_controller('roomify_property');
+  $content = $controller->view(array($property->property_id => $property), $view_mode);
+
+  drupal_set_title($property->name);
+
+  return $content;
+}

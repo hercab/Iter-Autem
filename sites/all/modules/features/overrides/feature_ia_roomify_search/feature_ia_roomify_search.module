@@ -1,0 +1,68 @@
+<?php
+/**
+ * @file
+ * Code for the feature_ia_roomify_search feature.
+ */
+
+include_once 'feature_ia_roomify_search.features.inc';
+
+function feature_ia_roomify_search_views_api(){
+    return array(
+        'api' => 3,
+        'path' => drupal_get_path('module', 'feature_ia_roomify_search').'/views',
+    );
+}
+
+
+/**
+ * Allows modules to alter permissions defined with the hook_roomify_rights.
+ *
+ * @param $permissions
+ */
+function feature_ia_roomify_search_roomify_rights_alter(&$permissions) {
+    // Remove permission 'access content' for anonymous users.
+    if(isset($permissions['anonymous user'] )){
+        $permissions['anonymous user'] += array(
+            'use search_api_autocomplete for search_api_views_properties_index' => 'use search_api_autocomplete for search_api_views_properties_index'
+        );
+        $permissions['anonymous user'] += array(
+            'use search_api_autocomplete for search_api_views_publicity_index'=>'use search_api_autocomplete for search_api_views_publicity_index'
+        );
+    }
+    if(isset($permissions['authenticated user'])){
+        $permissions['authenticated user'] += array(
+            'use search_api_autocomplete for search_api_views_properties_index' => 'use search_api_autocomplete for search_api_views_properties_index'
+        );
+        $permissions['authenticated user'] += array(
+            'use search_api_autocomplete for search_api_views_publicity_index'=>'use search_api_autocomplete for search_api_views_publicity_index'
+        );
+    }
+}
+/**
+ * Alter default search configurations.
+ *
+ * @param array $defaults
+ *   An array of default searches, keyed by machine names.
+ *
+ * @see hook_default_search_api_autocomplete_search()
+ */
+/*function feature_ia_roomify_search_default_search_api_autocomplete_search() {
+    $defaults['main'] = entity_create('search_api_autocomplete_search', array(
+
+
+    ));
+    return $defaults;
+}
+
+/**
+ * Alter default search configurations.
+ *
+ * @param array $defaults
+ *   An array of default searches, keyed by machine names.
+ *
+ * @see hook_default_search_api_autocomplete_search()
+ */
+/*function feature_ia_roomify_search_default_search_api_autocomplete_search_alter(array &$defaults) {
+    $defaults['main']->name = 'custom name';
+}*/
+

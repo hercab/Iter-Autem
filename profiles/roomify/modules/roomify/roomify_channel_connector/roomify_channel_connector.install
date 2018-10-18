@@ -1,0 +1,29 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_enable().
+ */
+function roomify_channel_connector_enable() {
+  $job = array(
+    'type' => 'update_availability',
+    'period' => 28800,
+    'periodic' => TRUE,
+  );
+  JobScheduler::get('roomify_channel_connector_update_availability')->set($job);
+}
+
+/**
+ * Schedule job 'update availability'.
+ */
+function roomify_channel_connector_update_7001() {
+  $job = array(
+    'type' => 'update_availability',
+    'period' => 28800,
+    'periodic' => TRUE,
+  );
+  JobScheduler::get('roomify_channel_connector_update_availability')->set($job);
+}

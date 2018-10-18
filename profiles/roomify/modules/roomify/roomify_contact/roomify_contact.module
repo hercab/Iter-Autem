@@ -1,0 +1,141 @@
+<?php
+
+/**
+ * @file
+ * Code for the Roomify Contact feature.
+ */
+
+include_once 'roomify_contact.features.inc';
+
+/**
+ * Implements hook_menu().
+ */
+function roomify_contact_menu() {
+  $items = array();
+
+  $items['contact-us/done'] = array(
+    'title' => 'Enquiry sent successfully!',
+    'page callback' => 'roomify_contact_done_page',
+    'access callback' => TRUE,
+    'type' => MENU_CALLBACK,
+  );
+
+  $items['admin/structure/entityform_types/manage/%entityform_type/page_text'] = array(
+    'title' => 'Page text',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('roomify_contact_page_text_form'),
+    'access arguments' => array('view any entityform'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 200,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function roomify_contact_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && $plugin_type == 'content_types') {
+    return 'plugins/content_types';
+  }
+}
+
+/**
+ * Contact us done page.
+ */
+function roomify_contact_done_page() {
+  return t('Thank you! Your enquiry has been received and we will get back to you soon!');
+}
+
+/**
+ * Send email to managers when a new contact form is submitted.
+ */
+function roomify_contact_notify_managers($entityform, $settings, $rules_state) {
+  module_load_include('inc', 'pet', 'pet.rules');
+
+  // Get all managers.
+  $managers = roomify_system_get_users_with_role('roomify manager');
+
+  foreach ($managers as $manager) {
+    pet_action_send_pet('new_email_from_contact_form', NULL, $manager, NULL, NULL, array(), $rules_state);
+
+  }
+}
+
+/**
+ * Implements hook_pet_substitutions_alter().
+ */
+function roomify_contact_pet_substitutions_alter(&$substitutions, $params) {
+  if (isset($params['rules_state']->currentArguments['entityform'])) {
+    $entityform = $params['rules_state']->currentArguments['entityform']->value();
+    $substitutions['entityform'] = $entityform;
+
+  }
+}
+
+/**
+ * Implements hook_pet_substitutions_alter().
+ */
+function roomify_contact_form_alter(&$form, &$form_state, $form_id) {
+  // Remove default values from dates.
+  if ($form['#form_id'] == 'contact_entityform_edit_form') {
+    $date_format = variable_get('bat_daily_date_format', 'Y-m-d');
+    $form['field_contact_arrival'][LANGUAGE_NONE][0]['#default_value']['value'] = '';
+    $form['field_contact_departure'][LANGUAGE_NONE][0]['#default_value']['value'] = '';
+  }
+}
+
+/**
+ * Implements hook_date_combo_process_alter().
+ */
+function roomify_contact_date_combo_process_alter(&$element, &$form_state, $context) {
+  if (isset($element['#entity_type']) && $element['#entity_type'] == 'entityform') {
+    if (isset($element['#field_name']) && ($element['#field_name'] == 'field_contact_arrival' || $element['#field_name'] == 'field_contact_departure')) {
+      $date_format = variable_get('bat_daily_date_format', 'Y-m-d');
+      $element['value']['#date_format'] = $date_format;
+    }
+  }
+}
+
+/**
+ * Implements hook_date_combo_process_alter().
+ */
+function roomify_contact_page_alter(&$page) {
+  if (strpos(current_path(), 'contact-us') !== FALSE) {
+    // Kill breadcrumb, set to empty array.
+    drupal_set_breadcrumb(array());
+  }
+}
+
+/**
+ * Contact-us page text configuration form.
+ */
+function roomify_contact_page_text_form($form, &$form_state) {
+  form_load_include($form_state, 'inc', 'variable_realm', 'variable_realm.variable');
+  module_load_include('form.inc', 'variable');
+  _roomify_system_prepare_variables_realm();
+
+  $form['description'] = array(
+    '#markup' => '<h4>' . t('This text will be used on the contact us page.') . '</h4>',
+  );
+
+  $form['roomify_contact_page_text'] = variable_form_element(variable_get_info('roomify_contact_page_text'));
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+
+  $form['#submit'] = array('roomify_contact_page_text_form_submit');
+  variable_realm_variable_settings_form_alter($form, $form_state, 'roomify_contact_page_text_form');
+
+  return $form;
+}
+
+/**
+ * Submit function for the roomify_contact_page_text_form form.
+ */
+function roomify_contact_page_text_form_submit($form, &$form_state) {
+  drupal_set_message(t('The configuration options have been saved'));
+}

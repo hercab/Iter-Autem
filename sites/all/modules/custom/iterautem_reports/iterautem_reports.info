@@ -1,0 +1,6 @@
+name = Iterautem Reports
+description = Iterautem Forena Reports
+core = 7.x
+package = Iterautem Reports
+
+dependencies[] = forena

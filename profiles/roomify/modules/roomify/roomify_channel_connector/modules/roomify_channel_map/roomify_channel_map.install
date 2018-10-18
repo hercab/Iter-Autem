@@ -1,0 +1,143 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Roomify Rate module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function roomify_channel_map_install() {
+  // Create "Booking" channel map.
+  roomify_channel_map_create_bookingcom_type();
+}
+
+/**
+ * Implements hook_schema().
+ */
+function roomify_channel_map_schema() {
+  $schema = array();
+
+  $schema['roomify_channel_maps'] = array(
+    'description' => 'The base table for Channel Maps.',
+    'fields' => array(
+      'channel_map_id' => array(
+        'description' => 'Primary Key: Identifier for a Channel Map.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The {channel_type}.type of this Channel Map.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid that owns this channel map.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the Channel Map was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the Channel Map was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'external_property_id' => array(
+        'description' => 'The external property id for this map.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'internal_property_id' => array(
+        'description' => 'The internal property id.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of map data.',
+      ),
+    ),
+    'primary key' => array('channel_map_id'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  $schema['roomify_channel_map_types'] = array(
+    'description' => 'The base table for Channel Map Types.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Identifier for a channel map type.',
+      ),
+      'type' => array(
+        'description' => 'The {rate_type}.type of this channel map type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this channel type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0x01,
+        'size' => 'tiny',
+        'description' => 'The exportable status of the entity.',
+      ),
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Create "Standard" rate type.
+ */
+function roomify_channel_map_create_bookingcom_type() {
+  $channel_type = roomify_channel_map_type_create(array(
+    'label' => 'Booking.com',
+    'type' => 'bookingcom',
+  ));
+
+  $channel_type->save();
+}

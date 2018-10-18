@@ -1,0 +1,317 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_install().
+ */
+function roomify_homepage_install() {
+  roomify_homepage_fields();
+
+  $nids = db_query('SELECT nid FROM {node} WHERE type =  :type', array(
+    ':type' => 'homepage',
+  ))->fetchCol();
+
+  // If there are not homepage nodes let's create one.
+  if (empty($nids)) {
+    roomify_homepage_example_homepage();
+  }
+
+  roomify_homepage_make_homepage_translatable();
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function roomify_homepage_uninstall() {
+  variable_set('site_frontpage', 'node');
+}
+
+/**
+ * Creates fields of the Homepage content type.
+ */
+function roomify_homepage_fields() {
+  module_load_include('inc', 'roomify_homepage', 'roomify_homepage.fields');
+
+  roomify_homepage_create_fields();
+}
+
+/**
+ * Creates an example homepage.
+ */
+function roomify_homepage_example_homepage() {
+  // Load Images.
+  $santorini = file_get_contents(drupal_get_path('module', 'roomify_homepage') . '/images/santorini.jpg');
+  $santorini = file_save_data($santorini, roomify_system_file_dir() . 'standard.jpg', FILE_EXISTS_RENAME);
+
+  $beach = file_get_contents(drupal_get_path('module', 'roomify_homepage') . '/images/beach.jpg');
+  $beach = file_save_data($beach, roomify_system_file_dir() . 'standard.jpg', FILE_EXISTS_RENAME);
+
+  $firenze = file_get_contents(drupal_get_path('module', 'roomify_homepage') . '/images/firenze.png');
+  $firenze = file_save_data($firenze, roomify_system_file_dir() . 'standard.jpg', FILE_EXISTS_RENAME);
+
+  $pool = file_get_contents(drupal_get_path('module', 'roomify_homepage') . '/images/pool.jpg');
+  $pool = file_save_data($pool, roomify_system_file_dir() . 'standard.jpg', FILE_EXISTS_RENAME);
+
+  $view = file_get_contents(drupal_get_path('module', 'roomify_homepage') . '/images/vista.png');
+  $view = file_save_data($view, roomify_system_file_dir() . 'standard.jpg', FILE_EXISTS_RENAME);
+
+  $node = new stdClass();
+  $node->title = 'Homepage Example';
+  $node->type = 'homepage';
+  node_object_prepare($node);
+
+  $node->language = 'en';
+  $node->uid = 1;
+  $node->status = 1;
+
+  $node->path['pathauto'] = 1;
+
+  $node = node_submit($node);
+
+  $node->field_homepage_main_text['en'][0]['value'] = '<p style="text-align: center;"><strong><em><span style="font-size:36px;">Welcome to your Roomify Site!</span></em></strong></p><p style="text-align: center;"><em><span style="font-size:26px;"></span></em><span style="font-size:26px;">Ut enim ad minim veniam, quis nostrud exercitation</span></p><p style="text-align: center;"><span style="font-size:26px;">ullamco laboris nisi ut aliquip ex ea commodo consequat.&nbsp;</span></p>';
+  $node->field_homepage_main_text['en'][0]['format'] = 'landing_page_text';
+
+  $node->field_homepage_slideshow[LANGUAGE_NONE][2] = array(
+    'fid' => $firenze->fid,
+    'filename' => $firenze->filename,
+    'filemime' => $firenze->filemime,
+    'uid' => 1,
+    'uri' => $firenze->uri,
+    'status' => 1,
+    'display' => 1,
+  );
+
+  $node->field_homepage_slideshow[LANGUAGE_NONE][0] = array(
+    'fid' => $beach->fid,
+    'filename' => $beach->filename,
+    'filemime' => $beach->filemime,
+    'uid' => 1,
+    'uri' => $beach->uri,
+    'status' => 1,
+    'display' => 1,
+  );
+
+  $node->field_homepage_slideshow[LANGUAGE_NONE][1] = array(
+    'fid' => $pool->fid,
+    'filename' => $pool->filename,
+    'filemime' => $pool->filemime,
+    'uid' => 1,
+    'uri' => $pool->uri,
+    'status' => 1,
+    'display' => 1,
+  );
+
+  $node->field_homepage_slideshow[LANGUAGE_NONE][3] = array(
+    'fid' => $view->fid,
+    'filename' => $view->filename,
+    'filemime' => $view->filemime,
+    'uid' => 1,
+    'uri' => $view->uri,
+    'status' => 1,
+    'display' => 1,
+  );
+
+  $node->field_homepage_slideshow[LANGUAGE_NONE][4] = array(
+    'fid' => $santorini->fid,
+    'filename' => $santorini->filename,
+    'filemime' => $santorini->filemime,
+    'uid' => 1,
+    'uri' => $santorini->uri,
+    'status' => 1,
+    'display' => 1,
+  );
+
+  $node->field_homepage_intro_text['en'][0]['value'] = '<p style="text-align: center;"><span style="font-size:56px;">Welcome to your Roomify Site!</span></p>';
+  $node->field_homepage_intro_text['en'][0]['format'] = 'landing_page_text';
+
+  $node->field_homepage_areas[LANGUAGE_NONE][0]['value'] = 1;
+
+  $properties_list = db_query('SELECT nid FROM {node} WHERE type =  :type', array(
+    ':type' => 'properties_list',
+  ))->fetchCol();
+
+  if (isset($properties_list[0])) {
+    $node->field_homepage_properties_lists[LANGUAGE_NONE][0]['target_id'] = $properties_list[0];
+  }
+  if (isset($properties_list[1])) {
+    $node->field_homepage_properties_lists[LANGUAGE_NONE][1]['target_id'] = $properties_list[1];
+  }
+  if (isset($properties_list[2])) {
+    $node->field_homepage_properties_lists[LANGUAGE_NONE][2]['target_id'] = $properties_list[2];
+  }
+  node_save($node);
+
+  $product = variable_get('roomify_accommodation_example_content', '');
+  if ($product == 'multi_property') {
+    variable_set('site_frontpage', 'node/' . $node->nid);
+  }
+}
+
+/**
+ * Make the Homepage Content type translatable.
+ */
+function roomify_homepage_make_homepage_translatable() {
+  $entity_translation = variable_get('entity_translation_settings_node__homepage', array());
+  $entity_translation['default_language'] = 'xx-et-default';
+  $entity_translation['hide_language_selector'] = 1;
+  $entity_translation['exclude_language_none'] = 1;
+  $entity_translation['lock_language'] = 0;
+  $entity_translation['shared_fields_original_only'] = 0;
+  variable_set('entity_translation_settings_node__homepage', $entity_translation);
+
+  variable_set('language_content_type_homepage', ENTITY_TRANSLATION_ENABLED);
+}
+
+/**
+ * Implements hook_update_dependencies().
+ */
+function roomify_homepage_update_dependencies() {
+  $dependencies['roomify_homepage'][7004] = array(
+    'roomify_system' => 7052,
+  );
+  $dependencies['roomify_homepage'][7007] = array(
+    'roomify_system' => 7062,
+  );
+  return $dependencies;
+}
+
+/**
+ * Enamble drag and drop for the slideshow field.
+ */
+function roomify_homepage_update_7001() {
+
+  $instance_info = field_read_instance('node', 'field_homepage_slideshow', 'homepage');
+  $instance_info['widget']['settings']['dragdropfile_enabled'] = 1;
+  $instance_info['widget']['settings']['dragdropfile_title'] = 'Drag 1 or more on this area to upload with ease';
+
+  field_update_instance($instance_info);
+}
+
+/**
+ * Creates offer field.
+ */
+function roomify_homepage_update_7002() {
+  module_load_include('inc', 'roomify_homepage', 'roomify_homepage.fields');
+
+  roomify_homepage_create_fields();
+}
+
+/**
+ * Updates homepages style.
+ */
+function roomify_homepage_update_7003() {
+  module_load_include('inc', 'roomify_homepage', 'roomify_homepage.fields');
+
+  roomify_homepage_create_fields();
+
+  $instance_info = field_read_instance('node', 'field_homepage_slideshow', 'homepage');
+  $instance_info['widget']['settings']['manualcrop_styles_list']['1600x580'] = '1600x580';
+  field_update_instance($instance_info);
+
+  $nids = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition('type', 'homepage', '=')
+    ->execute()
+    ->fetchCol();
+
+  // Get all of the homepage nodes.
+  $nodes = node_load_multiple($nids);
+  foreach ($nodes as $node) {
+    if (isset($node->field_homepage_style)) {
+      $node->field_homepage_style[LANGUAGE_NONE][0]['value'] = 'large';
+      field_attach_update('node', $node);
+    }
+  }
+}
+
+/**
+ * Creates properties lists field.
+ */
+function roomify_homepage_update_7004() {
+  module_load_include('inc', 'roomify_homepage', 'roomify_homepage.fields');
+
+  roomify_homepage_create_fields();
+}
+
+/**
+ * Updates properties image style.
+ */
+function roomify_homepage_update_7005() {
+  module_load_include('inc', 'roomify_homepage', 'roomify_homepage.fields');
+
+  roomify_homepage_create_fields();
+
+  $nids = db_select('node', 'n')
+    ->fields('n', array('nid'))
+    ->condition('type', 'homepage', '=')
+    ->execute()
+    ->fetchCol();
+
+  // Get all of the homepage nodes.
+  $nodes = node_load_multiple($nids);
+  foreach ($nodes as $node) {
+    if (isset($node->field_homepage_properties_style)) {
+      $node->field_homepage_properties_style[LANGUAGE_NONE][0]['value'] = 'vertical';
+      field_attach_update('node', $node);
+    }
+    if (isset($node->field_homepage_areas_style)) {
+      $node->field_homepage_areas_style[LANGUAGE_NONE][0]['value'] = 'vertical';
+      field_attach_update('node', $node);
+    }
+  }
+
+  // Update Field Groups.
+  $field_group = field_group_load_field_group('group_homepage_areas', 'node', 'homepage', 'form');
+  $field_group->children[0] = 'field_homepage_areas_style';
+  $field_group->children[1] = 'field_homepage_areas';
+  field_group_group_save($field_group);
+
+  $field_group = field_group_load_field_group('group_homepage_properties', 'node', 'homepage', 'form');
+  $field_group->children[0] = 'field_homepage_properties_style';
+  $field_group->children[1] = 'field_homepage_properties_view';
+  field_group_group_save($field_group);
+}
+
+/**
+ * Enable alt and title field on images.
+ */
+function roomify_homepage_update_7006() {
+  $instance_info = field_read_instance('node', 'field_homepage_slideshow', 'homepage');
+  $instance_info['settings']['alt_field'] = 1;
+  $instance_info['settings']['title_field'] = 1;
+  field_update_instance($instance_info);
+}
+
+/**
+ * Creates video field.
+ */
+function roomify_homepage_update_7007() {
+  module_load_include('inc', 'roomify_homepage', 'roomify_homepage.fields');
+
+  roomify_homepage_create_fields();
+}
+
+/**
+ * Add style option "Video".
+ */
+function roomify_homepage_update_7008() {
+  $field = field_read_field('field_homepage_style');
+
+  $field['settings']['allowed_values']['video'] = 'Video';
+
+  field_update_field($field);
+}
+
+/**
+ * Enable "Manually upload a thumbnail" on homepage Video field.
+ */
+function roomify_homepage_update_7009() {
+  $field = field_read_field('field_homepage_video');
+
+  $field['settings']['autothumbnail'] = 'manual_upload';
+
+  field_update_field($field);
+}

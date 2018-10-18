@@ -1,0 +1,339 @@
+<?php
+
+/**
+ * @file
+ * Install, update and uninstall functions for the Roomify Rate module.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function roomify_rate_install() {
+  // Create "Standard" rate type.
+  roomify_rate_create_standard_rate_type();
+
+  // Create "Standard" rate restriction type.
+  roomify_rate_create_standard_rate_restriction_type();
+}
+
+/**
+ * Implements hook_schema().
+ */
+function roomify_rate_schema() {
+  $schema = array();
+
+  $schema['roomify_rates'] = array(
+    'description' => 'The base table for Rates.',
+    'fields' => array(
+      'rate_id' => array(
+        'description' => 'Primary Key: Identifier for a Rate.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The {rate_type}.type of this Rate.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'language' => array(
+        'description' => 'The language of the Rate.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'name' => array(
+        'description' => 'The name of the Rate - a human-readable identifier.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the Rate was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the Rate was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid that created this rate.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+    ),
+    'primary key' => array('rate_id'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  $schema['roomify_rate_types'] = array(
+    'description' => 'The base table for Rate Types.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Identifier for a rate type.',
+      ),
+      'type' => array(
+        'description' => 'The {rate_type}.type of this rate type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this rate type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0x01,
+        'size' => 'tiny',
+        'description' => 'The exportable status of the entity.',
+      ),
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  $schema['roomify_rate_restrictions'] = array(
+    'description' => 'The base table for Rate restrictions.',
+    'fields' => array(
+      'rate_restriction_id' => array(
+        'description' => 'Primary Key: Identifier for a Rate restriction.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The {rate_restriction_type}.type of this Rate restriction.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'language' => array(
+        'description' => 'The language of the Rate restriction.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'label' => array(
+        'description' => 'The label of the Rate restriction.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the Rate restriction was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the Rate restriction was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid that created this rate restriction.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+    ),
+    'primary key' => array('rate_restriction_id'),
+    'indexes' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  $schema['roomify_rate_restriction_types'] = array(
+    'description' => 'The base table for Rate Restriction Types.',
+    'fields' => array(
+      'id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Identifier for a rate restriction type.',
+      ),
+      'type' => array(
+        'description' => 'The {rate_restriction_type}.type of this rate restriction type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this rate restriction type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data.',
+      ),
+      'status' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0x01,
+        'size' => 'tiny',
+        'description' => 'The exportable status of the entity.',
+      ),
+      'module' => array(
+        'description' => 'The name of the providing module if the entity has been defined in code.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
+    ),
+    'primary key' => array('id'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Create "Standard" rate type.
+ */
+function roomify_rate_create_standard_rate_type() {
+  $rate_type = roomify_rate_type_create(array(
+    'label' => 'Standard',
+    'type' => 'standard',
+  ));
+
+  $rate_type->save();
+}
+
+/**
+ * Create "Standard" rate restriction type.
+ */
+function roomify_rate_create_standard_rate_restriction_type() {
+  $rate_restriction_type = roomify_rate_restriction_type_create(array(
+    'label' => 'Standard',
+    'type' => 'standard',
+  ));
+
+  $rate_restriction_type->save();
+}
+
+/**
+ * Remove default value from fields 'Rate Valid From' and 'Rate Valid To'.
+ */
+function roomify_rate_update_7001() {
+  $bundles = roomify_rate_get_restriction_types();
+
+  foreach ($bundles as $bundle) {
+    $type_bundle = $bundle->type;
+
+    if (field_read_instance('roomify_rate_restriction', 'rate_valid_from', $type_bundle)) {
+      $instance = array(
+        'field_name' => 'rate_valid_from',
+        'entity_type' => 'roomify_rate_restriction',
+        'label' => 'Rate Valid From',
+        'bundle' => $type_bundle,
+        'required' => FALSE,
+        'widget' => array(
+          'type' => 'date_popup',
+        ),
+        'settings' => array(
+          'default_value' => 'blank',
+          'default_value2' => 'same',
+          'default_value_code' => '',
+          'default_value_code2' => '',
+          'user_register_form' => FALSE,
+        ),
+      );
+      field_update_instance($instance);
+    }
+
+    if (field_read_instance('roomify_rate_restriction', 'rate_valid_to', $type_bundle)) {
+      $instance = array(
+        'field_name' => 'rate_valid_to',
+        'entity_type' => 'roomify_rate_restriction',
+        'label' => 'Rate Valid To',
+        'bundle' => $type_bundle,
+        'required' => FALSE,
+        'widget' => array(
+          'type' => 'date_popup',
+        ),
+        'settings' => array(
+          'default_value' => 'blank',
+          'default_value2' => 'same',
+          'default_value_code' => '',
+          'default_value_code2' => '',
+          'user_register_form' => FALSE,
+        ),
+      );
+      field_update_instance($instance);
+    }
+  }
+}
+
+/**
+ * Add 'Minimum People' and 'Maximum People' fields.
+ */
+function roomify_rate_update_7002() {
+  module_load_include('inc', 'roomify_rate', 'roomify_rate.fields');
+
+  $bundles = roomify_rate_get_restriction_types();
+
+  foreach ($bundles as $bundle) {
+    $type_bundle = $bundle->type;
+
+    roomify_rate_add_minimum_people_field($type_bundle);
+    roomify_rate_add_maximum_people_field($type_bundle);
+  }
+}

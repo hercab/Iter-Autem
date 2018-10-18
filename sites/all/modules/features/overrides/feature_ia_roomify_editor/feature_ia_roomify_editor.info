@@ -1,0 +1,13 @@
+name = feature_ia_roomify_editor
+description = Feature Override roomify_editor
+core = 7.x
+package = Iterautem overrides
+version = 7.x-1.0
+dependencies[] = roomify_editor
+features[features_api][] = api:2
+features[features_override_items][] = wysiwyg.filtered_text
+features[features_overrides][] = wysiwyg.filtered_text.settings|buttons|default|Smiley
+features[features_overrides][] = wysiwyg.filtered_text.settings|buttons|drupal
+features_exclude[features_overrides][wysiwyg.filtered_text.preferences|version] = wysiwyg.filtered_text.preferences|version
+features_exclude[features_overrides][wysiwyg.filtered_text.settings|advanced__active_tab] = wysiwyg.filtered_text.settings|advanced__active_tab
+project path = sites/all/modules/features/overrides

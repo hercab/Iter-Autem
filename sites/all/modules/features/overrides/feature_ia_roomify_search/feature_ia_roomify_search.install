@@ -1,0 +1,17 @@
+<?php
+/**
+ * Set weight of the feature_ia_roomify_search module
+ */
+
+function feature_ia_roomify_search_update_7100(){
+    $result = db_select('system', 's')
+        ->fields('s', array('weight'))
+        ->condition('name','roomify_search','=')
+        ->execute();
+    $weight = !empty($result) ? $result->fetchField():0;
+
+    db_update('system')
+        ->fields(array('weight' => $weight + 1))
+        ->condition('name', 'feature_ia_roomify_search', '=')
+        ->execute();
+}

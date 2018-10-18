@@ -1,0 +1,122 @@
+.view-id-my_bookmarks .pub-content {
+    margin: 0 15px;
+    height: 480px;
+    padding: 10px;
+    background: white;
+    border: 1px solid #ECECEC;
+    position: relative;
+}
+
+
+.view-id-my_bookmarks .views-bootstrap-grid-plugin-style{
+    margin-bottom: 30px;
+}
+
+.view-id-my_bookmarks  .views-field-field-sp-featured-image {
+    position: relative;
+}
+
+.view-id-my_bookmarks .views-field-field-review-rating,
+.view-id-my_bookmarks .views-field-field-sp-area{
+    margin-top: 5px;
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 1.5;
+}
+
+.view-id-my_bookmarks .views-field-title {
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    clear: both;
+}
+
+.view-id-my_bookmarks .views-field-field-sp-short-description-et{
+    text-align: justify;
+}
+
+.view-id-my_bookmarks .views-field-field-bussiness-type {
+    background: rgba(0,0,0,0.8);
+    padding: 5px 10px;
+    position: absolute;
+    color: white;
+    font-weight: 400;
+    width: 100%;
+    text-align: center;
+}
+
+.flag-bookmarks,
+.pane-flag-bookmark-link{
+    display: inline-block;
+    height: 52px;
+    overflow: hidden;
+    position: absolute;
+    z-index: 999;
+    transform: translate(-50%, -50%);
+    top: 30%;
+    left: 50%;
+}
+
+.flag-bookmarks a.unflag-action,
+.flag-bookmarks a:hover {
+    text-decoration: none !important;
+    background-color: red;
+    border: 1px solid red;
+    -webkit-transition: 0.2s border-color ease-in-out;
+    -moz-transition: 0.2s border-color ease-in-out;
+    -ms-transition: 0.2s border-color ease-in-out;
+    -o-transition: 0.2s border-color ease-in-out;
+    -webkit-transition: 0.2s background-color ease-in-out;
+    -moz-transition: 0.2s background-color ease-in-out;
+    -ms-transition: 0.2s background-color ease-in-out;
+    -o-transition: 0.2s background-color ease-in-out;
+}
+
+.flag-bookmarks a {
+    display: block;
+    height: 51px;
+    width: 53px;
+    padding: 0 !important;
+    margin: 0 auto;
+    overflow: hidden;
+    border: 1px solid white;
+    border-radius: 50% !important;
+    color: transparent;
+    font-size: 14px;
+    font-weight: 400;
+    text-align: center;
+    text-transform: uppercase;
+    -webkit-transition: 0.2s border-color ease-in-out;
+    -moz-transition: 0.2s border-color ease-in-out;
+    -ms-transition: 0.2s border-color ease-in-out;
+    -o-transition: 0.2s border-color ease-in-out;
+    -webkit-transition: 0.2s background-color ease-in-out;
+    -moz-transition: 0.2s background-color ease-in-out;
+    -ms-transition: 0.2s background-color ease-in-out;
+    -o-transition: 0.2s background-color ease-in-out;
+}
+
+
+.flag-bookmarks a::before {
+    position: relative;
+    font-family: 'Glyphicons Halflings';
+    font-style: normal;
+    font-weight: normal;
+    line-height: 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    top: auto;
+    content: "\e013";
+    color: white;
+    background-color: transparent;
+    display: block;
+    font-size: 25px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.flag-bookmarks a::before{
+    font-size: 25px;
+    line-height: 52px
+}

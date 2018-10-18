@@ -1,0 +1,12 @@
+name = Date's datepicker inline
+description = Provides an inline version of date's datepicker widget.
+core = 7.x
+dependencies[] = date:date_popup
+
+stylesheets[all][] = themes/datepicker-inline.1.7.css
+
+
+; Information added by drush on 2015-11-18
+version = "c6aa61c6c8247fca72dece2b4bbee13400ee15e6"
+project = "date_datepicker_inline"
+datestamp = "1447884161"

@@ -1,0 +1,193 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_enable().
+ */
+function roomify_contact_enable() {
+  module_load_include('inc', 'roomify_contact', 'roomify_contact.fields');
+  // Create Fields.
+  roomify_contact_create_entityform_fields();
+
+  $entityform_block_types = variable_get('entityform_block_types', array());
+  $entityform_block_types[] = 'contact';
+  variable_set('entityform_block_types', $entityform_block_types);
+
+  roomify_system_create_update_menu_link('Contact us', 'contact-us', 'main-menu', 10);
+  // Add dependencies to date fields on contact form.
+  roomify_contact_add_date_fields_booking_request_dependency();
+
+  // Add PET contact form.
+  roomify_contact_form_add_pet();
+
+  $variable_realm_list = variable_get('variable_realm_list_language', array());
+  $variable_realm_list[] = 'roomify_contact_page_text';
+
+  variable_set('variable_realm_list_language', $variable_realm_list);
+}
+
+/**
+ * Add PET contact form.
+ */
+function roomify_contact_form_add_pet() {
+  $items['new_email_from_contact_form'] = entity_import('pet', '{
+    "name" : "new_email_from_contact_form",
+    "title" : "New email from contact form",
+    "subject" : "New email from contact form",
+    "mail_body" : "You have an enquiry from the Sitewide Contact form!\r\n\r\n\u003Cstrong\u003EFirst Name\u003C\/strong\u003E:      [entityform:field_contact_first_name]\r\n\u003Cstrong\u003ELast Name\u003C\/strong\u003E:      [entityform:field_contact_last_name]\r\n\u003Cstrong\u003EMail Address\u003C\/strong\u003E:   [entityform:field_contact_mail_address]\r\n\u003Cstrong\u003ETelephone\u003C\/strong\u003E:       [entityform:field_contact_telephone]\r\n\r\n\u003Cu\u003E\u003Cstrong\u003ERequested Dates\u003Cstrong\u003E\u003C\/u\u003E\r\n\u003Cstrong\u003ECheck In\u003C\/strong\u003E:     [entityform:field_contact_arrival:custom:D, d M, Y]\r\n\u003Cstrong\u003ECheck Out\u003C\/strong\u003E:  [entityform:field_contact_departure:custom:D, d M, Y]\r\n\r\nThe following message was left:\r\n\r\n\u0022\u003Ci\u003E[entityform:field_contact_more_informations]\u003C\/i\u003E\u0022\r\n",
+    "mail_body_plain" : "",
+    "send_plain" : "0",
+    "from_override" : "",
+    "cc_default" : "",
+    "bcc_default" : "",
+    "recipient_callback" : "",
+    "token_entity_types" : null,
+    "language" : "en",
+    "rdf_mapping" : []
+  }');
+
+  foreach ($items as $item) {
+    $item->save();
+  }
+}
+
+/**
+ * Add 'Arrival' and 'Departure' fields.
+ */
+function roomify_contact_update_7001() {
+  module_load_include('inc', 'roomify_contact', 'roomify_contact.fields');
+
+  roomify_contact_create_entityform_fields();
+}
+
+/**
+ * Add dependencies to Arrival date and Departure on Contact form.
+ */
+function roomify_contact_update_7002() {
+  module_load_include('inc', 'roomify_contact', 'roomify_contact.fields');
+
+  roomify_contact_create_entityform_fields();
+
+  roomify_contact_add_date_fields_booking_request_dependency();
+}
+
+/**
+ * Add dependencies to Arrival date and Departure on Contact form.
+ */
+function roomify_contact_add_date_fields_booking_request_dependency() {
+  $instances = field_info_instances();
+
+  $dependee_id = $instances['entityform']['contact']['field_booking_request']['id'];
+  $dependent_id = $instances['entityform']['contact']['field_contact_arrival']['id'];
+
+  $options = array(
+    'state' => 'visible',
+    'condition' => 'checked',
+    'grouping' => 'AND',
+    'effect' => 'show',
+  );
+
+  conditional_fields_dependency_insert($dependee_id, $dependent_id, $options);
+
+  $dependee_id = $instances['entityform']['contact']['field_booking_request']['id'];
+  $dependent_id = $instances['entityform']['contact']['field_contact_departure']['id'];
+
+  $options = array(
+    'state' => 'visible',
+    'condition' => 'checked',
+    'grouping' => 'AND',
+    'effect' => 'show',
+  );
+
+  conditional_fields_dependency_insert($dependee_id, $dependent_id, $options);
+}
+
+/**
+ * Improve fields weight.
+ */
+function roomify_contact_update_7003() {
+  $instance_info = field_read_instance('entityform', 'field_contact_first_name', 'contact');
+  $instance_info['display']['default']['weight'] = 0;
+  $instance_info['widget']['weight'] = 0;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('entityform', 'field_contact_last_name', 'contact');
+  $instance_info['display']['default']['weight'] = 1;
+  $instance_info['widget']['weight'] = 1;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('entityform', 'field_contact_arrival', 'contact');
+  $instance_info['widget']['weight'] = 6;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('entityform', 'field_contact_departure', 'contact');
+  $instance_info['display']['default']['weight'] = 7;
+  $instance_info['widget']['weight'] = 7;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('entityform', 'field_contact_mail_address', 'contact');
+  $instance_info['display']['default']['weight'] = 3;
+  $instance_info['widget']['weight'] = 3;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('entityform', 'field_contact_more_informations', 'contact');
+  $instance_info['display']['default']['weight'] = 5;
+  $instance_info['widget']['weight'] = 5;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('entityform', 'field_contact_telephone', 'contact');
+  $instance_info['display']['default']['weight'] = 3;
+  $instance_info['widget']['weight'] = 3;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('entityform', 'field_contact_telephone', 'contact');
+  $instance_info['display']['default']['weight'] = 3;
+  $instance_info['widget']['weight'] = 3;
+  field_update_instance($instance_info);
+
+  $instance_info = field_read_instance('entityform', 'field_booking_request', 'contact');
+  $instance_info['display']['default']['weight'] = 5;
+  $instance_info['widget']['weight'] = 5;
+  field_update_instance($instance_info);
+}
+
+/**
+ * Add PET contact form.
+ */
+function roomify_contact_update_7004() {
+  roomify_contact_form_add_pet();
+}
+
+/**
+ * Create menu link.
+ */
+function roomify_contact_update_7005() {
+  // Create link to enquiries.
+  $conversations_mlid = roomify_system_get_menu_link_id('Conversations', 'admin/bat/conversations/guest', 'roomify_dashboard_menu');
+  roomify_system_create_update_menu_link('Site Wide contact enquiries', 'admin/structure/entityform_types/manage/contact/submissions/autofields_table', 'roomify_dashboard_menu', 5, 1, $conversations_mlid);
+}
+
+/**
+ * Change "Contact" redirect path.
+ */
+function roomify_contact_update_7006() {
+  $entityform_type = entityform_type_load('contact');
+
+  if ($entityform_type->data['redirect_path'] != 'contact-us/done') {
+    $entityform_type->data['redirect_path'] = 'contact-us/done';
+    $entityform_type->save();
+  }
+}
+
+/**
+ * Add 'Contact-us page text' variable as translatable.
+ */
+function roomify_contact_update_7007() {
+  $variable_realm_list = variable_get('variable_realm_list_language', array());
+  $variable_realm_list[] = 'roomify_contact_page_text';
+
+  variable_set('variable_realm_list_language', $variable_realm_list);
+}

@@ -1,0 +1,118 @@
+<?php
+/**
+ * @file
+ * Drupal needs this blank file.
+ */
+
+
+
+/**
+ * Implement hook_form_alter().
+ */
+function ia_transport_form_alter(&$form, &$form_state, $form_id) {
+
+    if($form_id == 'roomify_accommodation_booking_confirmation_form') {
+
+        $arrival_date = $form_state['build_info']['args'][0];
+        $departure_date = $form_state['build_info']['args'][1];
+        $type_id = $form_state['build_info']['args'][3];
+        $group_size = $form_state['build_info']['args'][5];
+
+
+        $form['transport'] = array(
+            '#type' => 'fieldset',
+            '#title' => t('Transport'),
+            '#tree' => TRUE,
+        );
+
+        $form['transport']['transport_needed'] = array(
+            '#type' => 'checkbox',
+            '#title' => t('Request Transport'),
+            '#prefix' => '<div class="col-xs-12 col-sm-6">',
+            '#suffix' => '</div>'
+
+        );
+        $form['transport']['settings'] = array(
+            '#type' => 'container',
+            '#states' => array(
+                'invisible' => array(
+                    ':input#edit-transport-transport-needed' => array('checked' => FALSE),
+                ),
+            ),
+            '#attributes' => array('class' => array(''))
+        );
+        $form['transport']['settings']['type'] = array(
+            '#type' => 'select',
+            '#title' => t('Transport Type'),
+            '#options' => array(
+                0 => t('Private Taxi'),
+                1 => t('Collective Taxi'),
+                2 => t('Bus')
+            ),
+            '#states' => array(
+                'required' => array(
+                    ':input[name="transport_needed"]' => array('checked' => FALSE),
+                ),
+            ),
+            '#prefix' => '<div class="col-xs-12">',
+            '#suffix' => '</div>',
+            '#description' => t('Taxi private refer a car with a driver and exclusive for you, Collective refer a car with driver shared by you and somebody else. Bus refer usually Viazul or similar collective transports. ')
+        );
+
+        // Create unique ids and selectors for each picker.
+        $start_date_id = drupal_html_id('datepicker-start-date');
+        $start_date_selector = '#' . $start_date_id . ' .form-text';
+
+        $form['transport']['settings']['departure_time'] = array(
+            '#prefix' => '<div class="form-wrapper bat-date-range"><div class="start-date" id="' . $start_date_id . '">',
+            '#title' => t('Departure'),
+            '#suffix' => '</div>',
+            '#type' => 'date_popup',
+            '#description' => '',
+            '#date_format' => 'Y-m-d H:i:s',
+            '#default_value' => isset($arrival_date) ? $arrival_date->format('Y-m-d H:i:s') : '',
+//            '#datepicker_options' => array_merge($datepicker_options, array('endDateSelector' => $end_date_selector)),
+            '#states' => array(
+                'required' => array(
+                    ':input[name="transport_needed"]' => array('checked' => FALSE),
+                ),
+            ),
+            '#prefix' => '<div class="col-xs-12">',
+            '#suffix' => '</div>',
+            '#attributes' => array('placeholder' => t('Departure time')),
+        );
+        $form['transport']['settings']['departure_place'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Departure place'),
+            '#states' => array(
+                'required' => array(
+                    ':input[name="transport_needed"]' => array('checked' => FALSE),
+                ),
+            ),
+            '#prefix' => '<div class="col-xs-12 col-sm-6">',
+            '#suffix' => '</div>',
+        );
+        $form['transport']['settings']['arrival_place'] = array(
+            '#type' => 'textfield',
+            '#title' => t('Arrival place'),
+            '#states' => array(
+                'required' => array(
+                    ':input[name="transport_needed"]' => array('checked' => FALSE),
+                ),
+            ),
+            '#prefix' => '<div class="col-xs-12 col-sm-6">',
+            '#suffix' => '</div>',
+        );
+
+        $elements = array('transport', 'enquiry', 'submit');
+        $weight = 0;
+        foreach($elements as $element) {
+            $form[$element]['#weight'] = ($weight += 1);
+        }
+
+//        $form['#submit'][] = 'add_new_fields';
+
+    }
+
+
+}

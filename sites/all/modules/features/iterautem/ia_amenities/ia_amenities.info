@@ -1,0 +1,13 @@
+name = ia_amenities
+description = Feature for amenities
+core = 7.x
+package = Iterautem
+version = 7.x-1.0
+dependencies[] = features
+dependencies[] = list
+dependencies[] = options
+features[features_api][] = api:2
+features[field_base][] = field_filter_amenities
+features[field_instance][] = taxonomy_term-amenities-field_filter_amenities
+files[] = plugins/facetapi/amenities_filter.inc
+project path = sites/all/modules/features/iterautem

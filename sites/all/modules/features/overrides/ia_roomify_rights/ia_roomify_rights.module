@@ -1,0 +1,33 @@
+<?php
+/**
+ * @file
+ * Drupal needs this blank file.
+ */
+/**
+ * Implements hook_roomify_rights_alter()
+ * @param $permissions
+ */
+
+function ia_roomify_rights_roomify_rights_alter(&$permissions){
+    if(isset($permissions['roomify manager'])){
+        unset($permissions['roomify manager']['bypass node access']);
+        $permissions['roomify manager'] += array('view own unpublished content' => 'view own unpublished content');
+        $permissions['roomify manager'] += array('view revisions' => 'view revisions');
+        $permissions['roomify manager'] += array('revert revisions' => 'revert revisions');
+        $permissions['roomify manager'] += array('create properties_list content' => 'create properties_list content');
+        $permissions['roomify manager'] += array('edit any properties_list content' => 'edit any properties_list content');
+        $permissions['roomify manager'] += array('edit any blog content' => 'edit any blog content');
+        $permissions['roomify manager'] += array('create homepage content' => 'create homepage content');
+        $permissions['roomify manager'] += array('edit any homepage content' => 'edit any homepage content');
+        $permissions['roomify manager'] += array('create landing_page content' => 'create landing_page content');
+        $permissions['roomify manager'] += array('edit any landing_page content' => 'edit any landing_page content');
+        $permissions['roomify manager'] += array('edit any location content' => 'edit any location content');
+        $permissions['roomify manager'] += array('edit any page content' => 'edit any page content');
+        $permissions['roomify manager'] += array('edit any activity content' => 'edit any activity content');
+
+    }
+    if(isset($permissions['property owner'])){
+        $permissions['property owner'] += array('view own unpublished content' => 'view own unpublished content');
+        //$permissions['property owner'] += array('access content overview' => 'access content overview');
+    }
+}

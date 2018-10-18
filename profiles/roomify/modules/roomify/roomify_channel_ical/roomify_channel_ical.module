@@ -1,0 +1,622 @@
+<?php
+
+/**
+ * @file
+ */
+
+use Roomify\Bat\Calendar\Calendar;
+use Roomify\Bat\Store\DrupalDBStore;
+use Roomify\Bat\Unit\Unit;
+
+include_once 'roomify_channel_ical.features.inc';
+
+/**
+ * Drupal hook implementations.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function roomify_channel_ical_menu() {
+  $items = array();
+
+  // Channel management tab for units.
+  $items['admin/bat/config/types/manage/%bat_type/channel-management'] = array(
+    'title' => 'Channel Management',
+    'page callback' => 'roomify_channel_ical_management_tab',
+    'page arguments' => array(5),
+    'access callback' => 'roomify_channel_ical_management_tab_access',
+    'access arguments' => array(5),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => '20',
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_cron().
+ */
+function roomify_channel_ical_cron() {
+  global $conf;
+
+  $queue = DrupalQueue::get('roomify_channel_ical');
+
+  // Get all ical source variables.
+  foreach (preg_filter('/^roomify_channel_ical_import_url_(\d*)_(\d*)_(.*)/', '$1#$2#$3#$0', array_keys($conf)) as $source) {
+    list($property_id, $type_id, $ical_type, $var_name) = explode('#', $source);
+
+    // If a URL is defined for this source, add a task to fetch events.
+    if ($ical_url = variable_get($var_name, '')) {
+      // Don't run more often than every half hour.
+      $last_run = variable_get('cron_last_' . $var_name, 0);
+      $now = time();
+      if (($now - $last_run) >= 1800) {
+        $queue->createItem(array('property_id' => $property_id, 'type_id' => $type_id, 'ical_type' => $ical_type, 'ical_url' => $ical_url));
+        variable_set('cron_last_' . $var_name, $now);
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_cron_queue_info().
+ */
+function roomify_channel_ical_cron_queue_info() {
+  $queues['roomify_channel_ical'] = array(
+    'worker callback' => 'roomify_channel_ical_update_availability',
+    'time' => 60,
+  );
+  return $queues;
+}
+
+/**
+ * Implements hook_entity_delete().
+ */
+function roomify_channel_ical_entity_delete($entity, $entity_type) {
+  global $conf;
+
+  // Clean up iCal records when deleting entities.
+  if ($entity_type == 'bat_unit') {
+    db_delete('roomify_channel_ical_entities')
+      ->condition('unit_id', $entity->unit_id)
+      ->execute();
+  }
+  elseif ($entity_type == 'bat_booking') {
+    db_delete('roomify_channel_ical_entities')
+      ->condition('entity_id', $entity->booking_id)
+      ->condition('entity_type', $entity_type)
+      ->execute();
+  }
+  elseif ($entity_type == 'bat_event') {
+    db_delete('roomify_channel_ical_entities')
+      ->condition('entity_id', $entity->event_id)
+      ->condition('entity_type', $entity_type)
+      ->execute();
+  }
+  // Clean up iCal variables.
+  elseif ($entity_type == 'roomify_property') {
+    $property_id = FALSE;
+
+    foreach (preg_filter('/^roomify_channel_ical_import_url_(\d*)_(\d*)_(.*)/', '$1#$2#$3#$0', array_keys($conf)) as $source) {
+      list($property_id, $type_id, $ical_type, $var_name) = explode('#', $source);
+      if ($property_id == $entity->property_id) {
+        variable_del($var_name);
+      }
+    }
+
+    if ($property_id !== FALSE) {
+      // Delete export URL var.
+      variable_del('roomify_channel_ical_export_url_' . $property_id);
+    }
+  }
+  elseif ($entity_type == 'bat_type') {
+    foreach (preg_filter('/^roomify_channel_ical_import_url_(\d*)_(\d*)_(.*)/', '$1#$2#$3#$0', array_keys($conf)) as $source) {
+      list($property_id, $type_id, $ical_type, $var_name) = explode('#', $source);
+      if ($type_id == $entity->type_id) {
+        variable_del($var_name);
+      }
+    }
+  }
+}
+
+/**
+ * Custom functionality.
+ */
+
+/**
+ * Access callback - determine if the logged in user has access to administer
+ * the given unit.
+ */
+function roomify_channel_ical_access($type) {
+  global $user;
+
+  if (entity_access('update', 'bat_type', $type, $user)) {
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/**
+ * Implements hook_roomify_channel_connector_channel().
+ */
+function roomify_channel_ical_roomify_channel_connector_channel($property) {
+  $content = drupal_get_form('roomify_channel_ical_admin_form', $property);
+  return $content;
+}
+
+/**
+ * iCal admin form for property 'Channel Management' tab.
+ */
+function roomify_channel_ical_admin_form($form, &$form_state, $property) {
+  // Load the property and see if it has a single type with a single unit. If
+  // not iCal won't work.
+  if (count($property->property_bat_type_reference[LANGUAGE_NONE]) > 1) {
+    return;
+  }
+  else {
+    // Load the type.
+    $bat_type = bat_type_load($property->property_bat_type_reference[LANGUAGE_NONE][0]['target_id']);
+    if ($bat_type->type != 'home') {
+      return;
+    }
+  }
+
+  // Retrieve the export url from the connector if we don't have it cached.
+  $export_url = variable_get('roomify_channel_ical_export_url_' . $property->property_id, '');
+  if (empty($export_url)) {
+    $site_id = variable_get('roomify_channel_connector_site_id', '');
+    $cm_export_url = variable_get('roomify_channel_connector_app_url', 'http://cm.roomify.us/') . 'ical/export_url/' . $site_id . '/' . $property->property_id . '/' . $bat_type->type_id . '/availability';
+    $request = drupal_http_request($cm_export_url);
+    if ($request->code == 200 && $request->data) {
+      variable_set('roomify_channel_ical_export_url_' . $property->property_id, $request->data);
+      $export_url = $request->data;
+    }
+    else {
+      $export_url = NULL;
+    }
+  }
+
+  $form['ical_export'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('iCal availability export'),
+  );
+
+  if ($export_url == NULL) {
+    $form['ical_export']['export_url'] = array(
+      '#markup' => '<div class="messages error">' . t('We ran into an error retrieving your iCal export link - please try re-loading the page.') . '</div>',
+    );
+  }
+  else {
+    $form['ical_export']['export_url'] = array(
+      '#title' => t('iCal export link'),
+      '#markup' => '<div class="ical-export-link"><h3>iCal export link</h3>' .
+                   $export_url . ' (<a href="' . $export_url . '">download ICS file</a>)' .
+                   '</div><br />',
+    );
+  }
+
+  $form['ical_import'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('iCal availability import'),
+  );
+
+  $form['ical_import']['property_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $property->property_id,
+  );
+
+  $form['ical_import']['type_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $bat_type->type_id,
+  );
+
+  if ($ical_providers = _roomify_channel_ical_providers()) {
+    foreach ($ical_providers as $type => $info) {
+      $form['ical_import']['roomify_channel_ical_import_url_' . $property->property_id . '_' . $bat_type->type_id . '_' . $type] = array(
+        '#type' => 'textfield',
+        '#title' => $info->title . ' URL',
+        '#description' => t('Enter an iCal URL - availability will be synced from this calendar.'),
+        '#maxlength' => 2000,
+        '#default_value' => variable_get('roomify_channel_ical_import_url_' . $property->property_id . '_' . $bat_type->type_id . '_' . $type, '') ? variable_get('roomify_channel_ical_import_url_' . $property->property_id . '_' . $bat_type->type_id . '_' . $type) : '',
+      );
+    }
+  }
+  else {
+    drupal_set_message(t('Unable to retrieve providers, please try again'), 'warning');
+  }
+
+  $form['#validate'][] = 'roomify_channel_ical_admin_form_validate';
+
+  return system_settings_form($form);
+}
+
+/**
+ * Validation handler for ical form.
+ */
+function roomify_channel_ical_admin_form_validate($form, &$form_state) {
+  $ical_providers = _roomify_channel_ical_providers();
+  foreach ($ical_providers as $type => $title) {
+    $url = $form_state['values']['roomify_channel_ical_import_url_' . $form_state['values']['property_id'] . '_' . $form_state['values']['type_id'] . '_' . $type];
+
+    // Ensure we have a valid absolute URL.
+    if (strlen($url) && !valid_url($url, TRUE)) {
+      form_set_error('roomify_channel_ical_import_url_' . $form_state['values']['property_id'] . '_' . $form_state['values']['type_id'] . '_' . $type, t('The URL %url is invalid. Enter a fully-qualified URL, such as http://www.example.com/feed.xml.', array('%url' => $url)));
+    }
+  }
+}
+
+/**
+ * Cron queue callback - update availability from remote source.
+ */
+function roomify_channel_ical_update_availability($data) {
+
+  $site_id = variable_get('roomify_channel_connector_site_id', '');
+  $url = variable_get('roomify_channel_connector_app_url', 'http://cm.roomify.us/') . 'ical/import/' . $site_id . '/' . $data['property_id'] . '/' . $data['type_id'] . '/' . $data['ical_type'] . '/' . _roomify_channel_base64_encode($data['ical_url']);
+  $request = drupal_http_request($url);
+  if ($request->data) {
+    $events = json_decode($request->data);
+
+    // Ensure we got a valid response.
+    if (!is_array($events) || (count($events) == 0)) {
+      watchdog('roomify_channel_ical', 'Did not receive any events from the connector, request follows.');
+      watchdog('roomify_channel_ical', print_r($request, TRUE));
+      return FALSE;
+    }
+
+    // First, delete events that have disappeared from the remote source.
+    $eids = array();
+    foreach ($events as $event) {
+      $eids[] = $event->eid;
+    }
+
+    // For iCal, we can assume that we have a single unit.
+    $unit = current(bat_unit_load_multiple(FALSE, array('type_id' => $data['type_id'])));
+    if (!$unit) {
+      // Bail out if we can't get the unit.
+      watchdog('roomify_channel_ical', 'Could not load unit for type with ID %tid', array('%tid' => $data['type_id']));
+      return FALSE;
+    }
+
+    // Get entities we have created from this source, ending today or later for this unit.
+    $today = new \DateTime();
+    $query = db_select('roomify_channel_ical_entities', 'ri');
+    $query->fields('ri')
+      ->condition('ri.unit_id', $unit->unit_id)
+      ->condition('ri.ical_type', $data['ical_type'])
+      ->condition('ri.end_date', $today->format('Y-m-d 00:00:00'), '>=');
+    $result = $query->execute();
+
+    // Delete events/bookings that no longer exist in the remote source.
+    $existing_eids = array();
+    foreach ($result as $record) {
+      // If eid not present in remote, delete this entity and the record.
+      if (!in_array($record->eid, $eids)) {
+        // Check if the entity is present before attempting to delete.
+        if (entity_load($record->entity_type, array($record->entity_id), array(), TRUE)) {
+          watchdog('roomify_channel_ical', 'Deleting %et entity with ID %ei and EID %eid', array('%et' => $record->entity_type, '%ei' => $record->entity_id, '%eid' => $record->eid));
+          entity_delete($record->entity_type, $record->entity_id);
+        }
+        db_delete('roomify_channel_ical_entities')
+          ->condition('eid', $record->eid)
+          ->condition('entity_id', $record->entity_id)
+          ->condition('entity_type', $record->entity_type)
+          ->execute();
+      }
+      else {
+        $existing_eids[] = $record->eid;
+      }
+    }
+
+    // Now we create any new bookings.
+    foreach ($events as $event) {
+
+      // If this event's ID matches an existing event, skip to the next event.
+      if (in_array($event->eid, $existing_eids)) {
+        continue;
+      }
+
+      // If a booking already exists for this unit with these dates, skip to
+      // the next event.
+      if (roomify_channel_ical_booking_exists($event->startDate, $event->endDate, $unit->unit_id)) {
+        continue;
+      }
+
+      // If a blocking event conflicts with these dates, skip to the next
+      // event.
+      // FIXME: tell someone when this happens.
+      if (roomify_channel_ical_booking_conflicts($event->startDate, $event->endDate, $unit->unit_id)) {
+        watchdog('roomify_channel_ical', 'Found conflict for event %event and unit with ID %ud', array('%event' => print_r($event, TRUE), '%ud' => $unit->unit_id));
+        continue;
+      }
+
+      // If this is not a booking or an unavailable period, we don't know what
+      // to do with it.
+      if ($event->type != 'booking' && $event->type != 'unavailable') {
+        continue;
+      }
+
+      // We got this far, create the bat event.
+      // Set the proper state.
+      if ($event->type == 'booking') {
+        $state = bat_event_load_state_by_machine_name(BOOKED);
+      }
+      elseif ($event->type == 'unavailable') {
+        $state = bat_event_load_state_by_machine_name(NOT_AVAILABLE);
+      }
+
+      $event_start_date = new DateTime($event->startDate);
+      // Modify end date for how BAT needs it.
+      $event_end_date = new DateTime($event->endDate);
+      $event_end_date->sub(new DateInterval('PT1M'));
+
+      $bat_type = bat_type_load($data['type_id']);
+
+      if ($event->type == 'unavailable') {
+        $calendar_response = bat_event_get_calendar_response($event_start_date, $event_end_date, array(NOT_AVAILABLE), $bat_type->type_id, 'availability', FALSE, FALSE);
+
+        // This period is already unavailable, skip to the next event.
+        if (!empty($calendar_response['included'])) {
+          watchdog('roomify_channel_ical', 'Found that period is already unavailable for event %event and unit with ID %ud', array('%event' => print_r($event, TRUE), '%ud' => $unit->unit_id));
+          continue;
+        }
+      }
+
+      $bat_event = bat_event_create(array(
+        'type'       => 'availability',
+        'start_date' => $event->startDate,
+        'end_date'   => $event_end_date->format('Y-m-d H:i:s'),
+        'uid'        => $bat_type->uid,
+        'created'    => REQUEST_TIME,
+      ));
+      $bat_event->event_bat_unit_reference[LANGUAGE_NONE][0]['target_id'] = $unit->unit_id;
+      $bat_event->event_state_reference[LANGUAGE_NONE][0]['state_id'] = $state['id'];
+      $bat_event->save();
+
+      // Keep a record that we created this event.
+      $record = array(
+        'eid' => $event->eid,
+        'unit_id' => $unit->unit_id,
+        'ical_type' => $data['ical_type'],
+        'entity_id' => $bat_event->event_id,
+        'entity_type' => 'bat_event',
+        'start_date' => $event->startDate,
+        'end_date' => $event->endDate,
+      );
+      drupal_write_record('roomify_channel_ical_entities', $record);
+
+      // If this is a booking, create the booking entity.
+      if ($event->type == 'booking') {
+        $booking = array(
+          'type' => 'ical',
+          'label' => !empty($event->reservation_name) ? $event->reservation_name : $event->summary,
+          'created' => REQUEST_TIME,
+          'uid' => $bat_type->uid,
+          'booking_start_date' => array(LANGUAGE_NONE => array(0 => array('value' => $event->startDate))),
+          'booking_end_date' => array(LANGUAGE_NONE => array(0 => array('value' => $event->endDate))),
+          'booking_event_reference' => array(LANGUAGE_NONE => array(0 => array('target_id' => $bat_event->event_id))),
+          'field_event_id' => array(LANGUAGE_NONE => array(0 => array('value' => $event->eid))),
+          'field_reservation_id' => array(LANGUAGE_NONE => array(0 => array('value' => $event->reservation_id))),
+          'field_reservation_name' => array(LANGUAGE_NONE => array(0 => array('value' => $event->reservation_name))),
+          'field_description' => array(LANGUAGE_NONE => array(0 => array('value' => $event->description))),
+          'field_summary' => array(LANGUAGE_NONE => array(0 => array('value' => $event->summary))),
+          'field_ical_type' => array(LANGUAGE_NONE => array(0 => array('value' => $data['ical_type']))),
+          'booking_price' => array(LANGUAGE_NONE => array(0 => array('amount' => 0, 'currency_code' => commerce_default_currency()))),
+        );
+        $booking = bat_booking_create($booking);
+        $booking->save();
+
+        // Keep a record that we created this booking.
+        $record = array(
+          'eid'         => $event->eid,
+          'unit_id'     => $unit->unit_id,
+          'ical_type'   => $data['ical_type'],
+          'entity_id'   => $booking->booking_id,
+          'entity_type' => 'bat_booking',
+          'start_date'  => $event->startDate,
+          'end_date'    => $event->endDate,
+        );
+        drupal_write_record('roomify_channel_ical_entities', $record);
+
+        // Link the event to the booking.
+        $bat_event->event_booking_reference[LANGUAGE_NONE][0]['target_id'] = $booking->booking_id;
+        $bat_event->save();
+      }
+    }
+  }
+}
+
+/**
+ * Helper function - check if a booking with the given parameters exists.
+ */
+function roomify_channel_ical_booking_exists($startDate, $endDate, $unit_id) {
+  $query = db_select('field_data_event_bat_unit_reference', 'feur');
+  $query->join('field_data_booking_event_reference', 'fber', 'feur.entity_id = fber.booking_event_reference_target_id');
+  $query->join('field_data_booking_start_date', 'fbsd', 'fber.entity_id = fbsd.entity_id');
+  $query->join('field_data_booking_end_date', 'fbed', 'fber.entity_id = fbed.entity_id');
+
+  $query->condition('feur.event_bat_unit_reference_target_id', $unit_id)
+    ->condition('fbsd.booking_start_date_value', $startDate . ' 00:00:00')
+    ->condition('fbed.booking_end_date_value', $endDate . ' 00:00:00')
+    ->fields('fbsd', array('entity_id'));
+
+  return $query->execute()->rowCount();
+}
+
+/**
+ * Helper function - check if dates conflict with a blocking event.
+ */
+function roomify_channel_ical_booking_conflicts($startDate, $endDate, $unit_id) {
+  global $databases;
+
+  $prefix = (isset($databases['default']['default']['prefix'])) ? $databases['default']['default']['prefix'] : '';
+  $event_store = new DrupalDBStore('availability', DrupalDBStore::BAT_EVENT, $prefix);
+
+  $start_date = new DateTime($startDate);
+  $end_date = new DateTime($endDate);
+  $end_date->sub(new DateInterval('PT1M'));
+
+  $unit = bat_unit_load($unit_id);
+  $bat_units = array(
+    new Unit($unit->unit_id, $unit->getEventDefaultValue('availability')),
+  );
+
+  $calendar = new Calendar($bat_units, $event_store);
+  $events = $calendar->getEvents($start_date, $end_date);
+
+  // First deal with an extremely annoying edge case.
+  if ((count($events[$unit->unit_id]) == 1) &&
+      ($events[$unit->unit_id][0]->getValue() == 1) &&
+      ($events[$unit->unit_id][0]->getStartDate()->format('Y-m-d') == $startDate) &&
+      ($events[$unit->unit_id][0]->getEndDate()->modify('+1 day')->format('Y-m-d') == $endDate)) {
+    // If all these conditions are met, it means the BAT calendar is just
+    // telling us that the whole period is in the default state. That state ID
+    // is 1, so inconveniently if there is a Bat event entity with the
+    // ID of 1 that is in a blocking state, we will see it as a conflict.
+    return FALSE;
+  }
+
+  // See if there are any conflicting events.
+  foreach ($events[$unit->unit_id] as $event) {
+    $event_id = $event->getValue();
+    if ($event = bat_event_load($event_id)) {
+      $state = bat_event_load_state($event->event_state_reference[LANGUAGE_NONE][0]['state_id']);
+      if ($state['blocking']) {
+        return TRUE;
+      }
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * List available providers.
+ */
+function _roomify_channel_ical_providers() {
+  $cm_provider_url = variable_get('roomify_channel_connector_app_url', 'http://cm.roomify.us/') . 'ical/importers';
+  $request = drupal_http_request($cm_provider_url);
+  if ($request->data) {
+    return json_decode($request->data);
+  }
+}
+
+/**
+ * URL-safe base64 encoding function.
+ */
+function _roomify_channel_base64_encode($input) {
+  return strtr(base64_encode($input), '+/=', '._-');
+}
+
+/**
+ * Access callback for the room type 'Channel Management' tab.
+ */
+function roomify_channel_ical_management_tab_access($bat_type) {
+  if ($bat_type->type == 'room') {
+    $units = bat_unit_load_multiple(FALSE, array('type_id' => $bat_type->type_id));
+
+    if (count($units) == 1) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
+}
+
+/**
+ * Room type 'Channel Management' tab.
+ */
+function roomify_channel_ical_management_tab($bat_type) {
+  return drupal_get_form('roomify_channel_ical_admin_room_type_form', $bat_type);
+}
+
+/**
+ * iCal admin form for room type 'Channel Management' tab.
+ */
+function roomify_channel_ical_admin_room_type_form($form, &$form_state, $bat_type) {
+  $property = roomify_property_load($bat_type->field_st_property_reference[LANGUAGE_NONE][0]['target_id']);
+
+  // Retrieve the export url from the connector if we don't have it cached.
+  $export_url = variable_get('roomify_channel_ical_export_url_' . $property->property_id . '_' . $bat_type->type_id, '');
+  if (empty($export_url)) {
+    $site_id = variable_get('roomify_channel_connector_site_id', '');
+    $cm_export_url = variable_get('roomify_channel_connector_app_url', 'http://cm.roomify.us/') . 'ical/export_url/' . $site_id . '/' . $property->property_id . '/' . $bat_type->type_id . '/availability';
+    $request = drupal_http_request($cm_export_url);
+    if ($request->code == 200 && $request->data) {
+      variable_set('roomify_channel_ical_export_url_' . $property->property_id . '_' . $bat_type->type_id, $request->data);
+      $export_url = $request->data;
+    }
+    else {
+      $export_url = NULL;
+    }
+  }
+
+  $form['ical_export'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('iCal availability export'),
+  );
+
+  if ($export_url == NULL) {
+    $form['ical_export']['export_url'] = array(
+      '#markup' => '<div class="messages error">' . t('We ran into an error retrieving your iCal export link - please try re-loading the page.') . '</div>',
+    );
+  }
+  else {
+    $form['ical_export']['export_url'] = array(
+      '#title' => t('iCal export link'),
+      '#markup' => '<div class="ical-export-link"><h3>iCal export link</h3>' .
+                   $export_url . ' (<a href="' . $export_url . '">download ICS file</a>)' .
+                   '</div><br />',
+    );
+  }
+
+  $form['ical_import'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('iCal availability import'),
+  );
+
+  $form['ical_import']['property_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $property->property_id,
+  );
+
+  $form['ical_import']['type_id'] = array(
+    '#type' => 'hidden',
+    '#value' => $bat_type->type_id,
+  );
+
+  if ($ical_providers = _roomify_channel_ical_providers()) {
+    foreach ($ical_providers as $type => $info) {
+      $form['ical_import']['roomify_channel_ical_import_url_' . $property->property_id . '_' . $bat_type->type_id . '_' . $type] = array(
+        '#type' => 'textfield',
+        '#title' => $info->title . ' URL',
+        '#description' => t('Enter an iCal URL - availability will be synced from this calendar.'),
+        '#maxlength' => 2000,
+        '#default_value' => variable_get('roomify_channel_ical_import_url_' . $property->property_id . '_' . $bat_type->type_id . '_' . $type, '') ? variable_get('roomify_channel_ical_import_url_' . $property->property_id . '_' . $bat_type->type_id . '_' . $type) : '',
+      );
+    }
+  }
+  else {
+    drupal_set_message(t('Unable to retrieve providers, please try again'), 'warning');
+  }
+
+  $form['#validate'][] = 'roomify_channel_ical_admin_room_type_form_validate';
+
+  return system_settings_form($form);
+}
+
+/**
+ * Validation handler for ical room type form.
+ */
+function roomify_channel_ical_admin_room_type_form_validate($form, &$form_state) {
+  $ical_providers = _roomify_channel_ical_providers();
+  foreach ($ical_providers as $type => $title) {
+    $url = $form_state['values']['roomify_channel_ical_import_url_' . $form_state['values']['property_id'] . '_' . $form_state['values']['type_id'] . '_' . $type];
+
+    // Ensure we have a valid absolute URL.
+    if (strlen($url) && !valid_url($url, TRUE)) {
+      form_set_error('roomify_channel_ical_import_url_' . $form_state['values']['property_id'] . '_' . $form_state['values']['type_id'] . '_' . $type, t('The URL %url is invalid. Enter a fully-qualified URL, such as http://www.example.com/feed.xml.', array('%url' => $url)));
+    }
+  }
+}

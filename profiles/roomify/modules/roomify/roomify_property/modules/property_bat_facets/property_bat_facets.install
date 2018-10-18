@@ -1,0 +1,36 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_install().
+ */
+function property_bat_facets_install() {
+  _roomify_property_match_biggest_bat_type();
+}
+
+/**
+ * Set a variable with the biggest bat type.
+ */
+function property_bat_facets_update_7001() {
+  _roomify_property_match_biggest_bat_type();
+}
+
+/**
+ * Match the type with the biggest max_capacity field.
+ */
+function _roomify_property_match_biggest_bat_type() {
+  $types = entity_load('bat_type', FALSE, array(), TRUE);
+  foreach ($types as $type) {
+    if ($type->type == 'home' || $type->type == 'room') {
+      if ($max_capacity = field_get_items('bat_type', $type, 'field_st_max_capacity')) {
+        $max_properties_capacity = variable_get('roomify_max_property_type_capacity', '1');
+        if ($max_capacity[0]['value'] >= $max_properties_capacity) {
+          variable_set('roomify_max_property_type_capacity', $max_capacity[0]['value']);
+        }
+      }
+    }
+  }
+}

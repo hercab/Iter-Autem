@@ -1,0 +1,8 @@
+name = Iter Autem Accommodation Booking
+description = Custom Booking modules for the Iter Autem Accommodation product.
+core = 7.x
+
+package = Iter Autem
+
+dependencies[] = roomify_accommodation_booking
+dependencies[] = dc_ajax_add_cart

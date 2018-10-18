@@ -1,0 +1,61 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implementation of hook_schema().
+ */
+function roomify_channel_ical_schema() {
+  $schema['roomify_channel_ical_entities'] = array(
+    'description' => 'Store information about entities created by the iCal source.',
+    'fields' => array(
+      'eid' => array(
+        'type' => 'varchar',
+        'length' => '32',
+        'description' => 'Event Identifier.',
+        'not null' => TRUE,
+      ),
+      'unit_id' => array(
+        'description' => 'ID of the Bat Unit.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'entity_id' => array(
+        'description' => 'Entity ID.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'entity_type' => array(
+        'type' => 'varchar',
+        'length' => '128',
+        'description' => 'Entity type.',
+        'not null' => TRUE,
+      ),
+      'ical_type' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'iCal type (e.g. airbnb, homeaway).',
+      ),
+      'start_date' => array(
+        'type' => 'datetime',
+        'mysql_type' => 'datetime',
+        'description' => 'Event Start Date.',
+      ),
+      'end_date' => array(
+        'type' => 'datetime',
+        'mysql_type' => 'datetime',
+        'description' => 'Event End Date.',
+      ),
+    ),
+    'primary key' => array('eid', 'entity_type'),
+    'indexes' => array(
+      'unit_id' => array('unit_id'),
+    ),
+  );
+
+  return $schema;
+}

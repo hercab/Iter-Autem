@@ -1,0 +1,14 @@
+name = Previewable Email Templates
+description = Create previewable email templates with token and rules support.
+dependencies[] = entity_token
+dependencies[] = entity
+core = 7.x
+version = 7.x-1.x-dev
+package = Mail
+configure = admin/config/system/pet/settings
+stylesheets[all][] = pet.css
+
+; Information added by drush on 2017-03-27
+version = "3a42221335ecf717a6a538e431394afcd7f198c3"
+project = "pet"
+datestamp = "1490627081"

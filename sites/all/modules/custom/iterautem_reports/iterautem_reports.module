@@ -1,0 +1,38 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: yunior
+ * Date: 6/17/2018
+ * Time: 5:23 PM
+ */
+
+function iterautem_reports_forena_repos_alter(&$repos) {
+    $m_path = drupal_get_path('module', 'iterautem_reports');
+    $repos['iterautem'] = array(
+        'path' => $m_path . '/data',
+        'title' => 'Iter Autem repository',
+        'access callback' => 'user_access',
+        'user callback' => 'forena_current_user_id',
+        'data provider' => 'FrxDrupal',
+    );
+}
+
+function iterautem_reports_forena_report_directory() {
+    return drupal_get_path('module', 'iterautem_reports') . '/reports';
+}
+
+/*function iterautem_reports_forena_parameters_alter($report_name, &$parms) {
+
+}*/
+
+
+/*function iterautem_reports_forena_data_alter(&$data, $context) {
+    if ($context['provider'] == 'iterautem' && $data ) {
+        foreach($data as $row) {
+            //$row->mydata = 'foo';
+        }
+
+    }
+}*/
+
+

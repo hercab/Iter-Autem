@@ -1,0 +1,5 @@
+name = Profile2 pages
+description = Adds separate pages for viewing and editing profiles.
+core = 7.x
+files[] = includes/translation.handler.profile2_page.inc
+dependencies[] = profile2

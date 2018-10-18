@@ -1,0 +1,149 @@
+<?php
+
+/**
+ * @file
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function roomify_terms_conditions_menu() {
+  $items['admin/config/content/terms-and-conditions'] = array(
+    'title' => 'Terms & Conditions',
+    'description' => 'Terms & Conditions.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('roomify_terms_conditions_configuration_form'),
+    'access arguments' => array('bypass node access'),
+    'type' => MENU_NORMAL_ITEM,
+    'weight' => 10,
+  );
+
+  $items['terms-and-conditions'] = array(
+    'title callback' => 'roomify_terms_and_conditions_page_title',
+    'page callback' => 'roomify_terms_conditions_page',
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+
+  return $items;
+}
+
+/**
+ * Menu title callback.
+ */
+function roomify_terms_and_conditions_page_title() {
+  return t('Terms & Conditions');
+}
+
+/**
+ * Terms & Conditions page callback.
+ */
+function roomify_terms_conditions_page() {
+  global $language;
+
+  variable_realm_switch('language', $language->language);
+
+  $terms_conditions_body = variable_get_value('roomify_terms_conditions_body', array('language' => $language));
+
+  $terms_conditions_attachment = variable_get('terms_conditions_attachment', '');
+
+  $pdf_link = '';
+  $file = file_load($terms_conditions_attachment);
+  if ($file !== FALSE) {
+    $pdf_icon = theme('image', array('path' => drupal_get_path('module', 'roomify_terms_conditions') . '/images/pdf-icon.png'));
+    $pdf_link = l($pdf_icon, file_create_url($file->uri), array('html' => TRUE, 'attributes' => array('target' => '_blank')));
+
+    $pdf_link = '<div class="terms-conditions-pdf">' . $pdf_link . '</div>';
+  }
+
+  $body = check_markup($terms_conditions_body['value'], $terms_conditions_body['format']);
+  $body = '<div class="terms-conditions-body">' . $body . '</div>';
+
+  return $body . $pdf_link;
+}
+
+/**
+ * Terms & Conditions configuration form.
+ */
+function roomify_terms_conditions_configuration_form($form, &$form_state) {
+  form_load_include($form_state, 'inc', 'variable_realm', 'variable_realm.variable');
+  module_load_include('form.inc', 'variable');
+  _roomify_system_prepare_variables_realm();
+
+  $form['terms_conditions'] = array(
+    '#type' => 'container',
+    '#prefix' => '<div id="terms-conditions">',
+    '#suffix' => '</div>',
+  );
+
+  $form['terms_conditions']['terms_conditions'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Require acceptance of Terms & Conditions when booking'),
+    '#default_value' => variable_get('roomify_terms_conditions', 1),
+    '#ajax' => array(
+      'callback' => 'roomify_terms_conditions_configuration_form_ajax_callback',
+      'wrapper' => 'terms-conditions',
+    ),
+  );
+
+  $form['terms_conditions']['roomify_terms_conditions_message'] = variable_form_element(variable_get_info('roomify_terms_conditions_message'));
+
+  $form['terms_conditions']['roomify_terms_conditions_body'] = variable_form_element(variable_get_info('roomify_terms_conditions_body'));
+
+  $form['terms_conditions']['terms_conditions_attachment'] = array(
+    '#type' => 'managed_file',
+    '#title' => t('Attachment'),
+    '#description' => t('You may upload a PDF version of your Terms & Conditions here.'),
+    '#upload_location' => 'public://',
+    '#upload_validators' => array('file_validate_extensions' => array('pdf')),
+    '#default_value' => variable_get('terms_conditions_attachment', ''),
+  );
+
+  if (($form_state['rebuild'] && isset($form_state['values']['terms_conditions']) && !$form_state['values']['terms_conditions']) || (!variable_get('roomify_terms_conditions', 1) && !$form_state['rebuild'])) {
+    $form['terms_conditions']['roomify_terms_conditions_message']['#access'] = FALSE;
+    $form['terms_conditions']['roomify_terms_conditions_body']['#access'] = FALSE;
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Save configuration'),
+  );
+
+  $form['#submit'] = array('roomify_terms_conditions_configuration_form_submit');
+  variable_realm_variable_settings_form_alter($form, $form_state, 'roomify_terms_conditions_configuration_form');
+
+  return $form;
+}
+
+/**
+ * Ajax callback for roomify_terms_conditions_configuration_form form.
+ */
+function roomify_terms_conditions_configuration_form_ajax_callback($form, &$form_state) {
+  return $form['terms_conditions'];
+}
+
+/**
+ * Submit callback for roomify_terms_conditions_configuration_form form.
+ */
+function roomify_terms_conditions_configuration_form_submit($form, &$form_state) {
+  variable_set('roomify_terms_conditions', $form_state['values']['terms_conditions']);
+  variable_set('terms_conditions_attachment', $form_state['values']['terms_conditions_attachment']);
+
+  drupal_set_message(t('The configuration options have been saved'));
+}
+
+/**
+ * Implements hook_commerce_checkout_pane_info().
+ */
+function roomify_terms_conditions_commerce_checkout_pane_info() {
+  $checkout_panes = array();
+
+  $checkout_panes['terms_conditions'] = array(
+    'title' => t('Terms & Conditions'),
+    'file' => 'includes/roomify_terms_conditions.checkout_pane.inc',
+    'base' => 'roomify_terms_conditions_review_pane',
+    'page' => 'review',
+  );
+
+  return $checkout_panes;
+}

@@ -1,0 +1,30 @@
+<?php
+/**
+ * @file
+ * Drupal needs this blank file.
+ */
+
+/**
+ * Define all filter plugins provided by the module.
+ *
+ * See the FacetapiFilter docblock for more information on what filter plugins
+ * do and what their responsibilities are.
+ *
+ * @return array
+ *   An associative array keyed by unique name of the filter. Each filter is an
+ *   associative array keyed by "handler" containing:
+ *   - label: The human readable name of the plugin displayed in the admin UI.
+ *   - class: The name of the plugin class.
+ *
+ * @see FacetapiFilter
+ */
+function ia_amenities_facetapi_filters() {
+    return array(
+        'amenities_filter' => array(
+            'handler' => array(
+                'label' => t('Shows selected amenities'),
+                'class' => 'FacetapiFilterAmenities',
+            ),
+        ),
+    );
+}

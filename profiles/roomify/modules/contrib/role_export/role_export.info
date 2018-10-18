@@ -1,0 +1,7 @@
+name = Role Export
+description = Exportable user roles with role machine names.
+core = 7.x
+; Information added by drush on 2012-02-02
+version = "0aef061b79a1dd0a949d504a238bf8b3f9f41b1b"
+project = "role_export"
+datestamp = "1328194760"

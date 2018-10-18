@@ -1,0 +1,845 @@
+body.page-single-property-listing {
+  background: #F8F8F8;
+  .ui-tabs .ui-tabs-panel {
+    @media (min-width: $screen-md) {
+      padding: 90px;
+    }
+    h1,h2,h3,h4 {
+      line-height: 1.4em;
+    }
+  }
+  .main-container {
+    @media (min-width: $screen-sm) {
+      padding-bottom: 147px;
+    }
+  }
+  .select2.select2-container {
+    width: 100%;
+  }
+  .select2-selection--single {
+    height: 35px;
+  }
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 33px;
+  }
+  strong {
+    font-weight: 400;
+  }
+  .tabs--primary {
+    position: absolute;
+    top: 75px;
+    z-index: 3;
+    color: white;
+    border-bottom: 0;
+  }
+  .panel-content-top {
+    position: relative;
+  }
+  .main-container {
+    padding-top: 0;
+    position: relative;
+  }
+  .pane-property-slideshow-panel-pane-1 {
+    background: white;
+    padding: 0;
+    border: 1px solid #ececec;
+    border-right: none;
+    @media (min-width: $screen-md) {
+      height: 635px;
+    }
+    .slide__content {
+      position: relative;
+      .slide__caption {
+        min-height: 0;
+        padding: 0;
+      }
+      // Description
+      .slide__overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(0,0,0,.5);
+        text-align: center;
+        padding: 15px;
+        color: white;
+        
+        .title {
+          font-size: 22px;
+          font-weight: 400;
+        }
+        
+        .alt {
+          font-size: 16px;
+          color: #999;
+          font-style: italic;
+        }
+        @media (max-width: $screen-xs) {
+          display: none;
+        }
+      }
+    }
+    
+    .slick-wrapper {
+      margin-bottom: 70px;
+      @media (max-width: $screen-xs) {
+        margin-bottom: 0;
+      }
+    }
+    .slick-dots {
+      bottom: -35px;
+    }
+    #slick-asnavfor-thumbnail-slider.slick__slider.slick-slider {
+      margin-left: 25px;
+      margin-right: 25px;
+    }
+    .slick--display--thumbnail {
+      top: 22px;
+      @media (max-width: $screen-xs) {
+        display: none;
+      }
+      .slick-arrow {
+        display: none !important;
+      }
+      .slick__slide {
+        margin-right: 6px;
+        margin-left: 6px;
+        img {
+          border: 4px solid transparent;
+        }
+        &.slick-current {
+          img {
+            border-color: rgba(0, 188, 212, 0.7);
+          }
+        }
+      }
+    }
+    .slick-dotted.slick-slider {
+
+    }
+    .slick.slick--view--property {
+      position: relative;
+    }
+    .slick-next.slick-arrow {
+      background: url("../images/arrow_right.png") 0 50% no-repeat;
+      background: url("../images/arrow_right.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      position: absolute;
+      top: 50%;
+      width: 30px;
+      height: 30px;
+      margin-top: 0;
+      text-indent: -9999px;
+      border: 0;
+      background-size: contain;
+      right: 12px;
+      @media (max-width: $screen-sm) {
+        display: none !important;
+      }
+    }
+    .slick-prev.slick-arrow {
+      background: url("../images/arrow_left.png") 0 50% no-repeat;
+      background: url("../images/arrow_left.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      position: absolute;
+      top: 50%;
+      width: 30px;
+      height: 30px;
+      margin-top: 0;
+      text-indent: -9999px;
+      border: 0;
+      background-size: contain;
+      left: 12px;
+      @media (max-width: $screen-sm) {
+        display: none !important;
+      }
+    }
+  }
+  .pane-roomify-property-name {
+    display: inline-block;
+    width: 100%;
+    padding: 10px 0;
+    text-align: center;
+    margin-top: 80px;
+    line-height: 1.5em;
+  }
+  .pane-property-slideshow-panel-pane-1 {
+	  border: none;
+	  min-height: inherit;
+    max-height: none;
+    background: transparent;
+    height: auto;
+	  .slick-wrapper {
+	  	margin-bottom: 0;
+    }
+	  #slick-asnavfor-thumbnail-slider.slick__slider.slick-slider {
+	    margin-left: 25px;
+	    margin-right: 25px;
+	    display: none;
+	  }
+    .slick__slide {
+      img {
+        width: 100%;
+      }
+    }
+	  .slick--display--thumbnail {
+	    top: 20px;
+	    display: none;
+	  }
+    .slick__arrow button {
+      top: calc(50% - 15px);
+    }
+	}
+  .pane-roomify-listing-availability-search-block-roomify-listing-search,
+	.pane-locanda-availability-search {
+    width: 100%;
+    margin: 0 auto;
+    max-width: 1200px;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: calc(50% - 60px) !important;
+    @media (min-width: $screen-sm-max) {
+      -webkit-animation-name: fadeIn;
+      -moz-animation-name: fadeIn;
+      -ms-animation-name: fadeIn;
+      -o-animation-name: fadeIn;
+      animation-name: fadeIn;
+      -webkit-animation-iteration-count: 1;
+      -moz-animation-iteration-count: 1;
+      -ms-animation-iteration-count: 1;
+      -o-animation-iteration-count: 1;
+      animation-iteration-count: 1;
+      -webkit-animation-duration: 2s;
+      -moz-animation-duration: 2s;
+      -ms-animation-duration: 2s;
+      -o-animation-duration: 2s;
+      animation-duration: 2s;
+      -webkit-animation-delay: 0.4s;
+      -moz-animation-delay: 0.4s;
+      -ms-animation-delay: 0.4s;
+      -o-animation-delay: 0.4s;
+      animation-delay: 0.4s;
+      -webkit-animation-timing-function: ease;
+      -moz-animation-timing-function: ease;
+      -ms-animation-timing-function: ease;
+      -o-animation-timing-function: ease;
+      animation-timing-function: ease;
+      -webkit-animation-fill-mode: both;
+      -moz-animation-fill-mode: both;
+      -ms-animation-fill-mode: both;
+      -o-animation-fill-mode: both;
+      animation-fill-mode: both;
+      -webkit-backface-visibility: hidden;
+      -moz-backface-visibility: hidden;
+      -ms-backface-visibility: hidden;
+      -o-backface-visibility: hidden;
+      backface-visibility: hidden;
+    }
+    @media (min-width: $screen-sm-max) {
+      form {
+        padding: 60px 0px 35px 50px;
+        background: rgba(0,0,0,0.6);
+        border-radius: 2px;
+      }
+    }
+    @media (max-width: 1200px) {
+      max-width: 1000px;
+
+    }
+    @media (max-width: 1100px) {
+      max-width: 768px;
+
+    }
+    @media (max-width: 900px) {
+      position: relative;
+      top: 0;
+      border-radius: 0;
+      background: #0b1418;
+      width: 100%;
+      max-width: 100%;
+      padding: 36px 0 20px 20px;
+    }
+    form {
+    	margin: 0 auto;
+    	display: table;
+    	max-width: 720px;
+    	width: 100%;
+    	.listing-base-price {
+    		display: none;
+    	}
+    	.form-wrapper {
+	    	@include make-row();
+        margin-bottom: 0;
+        .form-type-date-popup {
+        	width: 100%;
+        }
+        @media (max-width: $screen-sm) {
+          margin-right: 0;
+        }
+        .form-item .form-item {
+        	width: 100%;
+        }
+        .container-inline-date .date-padding {
+          float: none;
+          input {
+          	width: 100%;
+          }
+        }
+      }
+      .listing-date-range,
+    	.bat-date-range {
+    		@include make-xs-column(12);
+	      @include make-sm-column(7);
+	      @media (max-width: $screen-sm) {
+	        padding-right: 0;
+	      }
+	      .start-date {
+	        float:left;
+	        @include make-xs-column(12);
+	        @include make-sm-column(6);
+	        margin-bottom: 15px;
+	        @media (max-width: $screen-sm) {
+	          padding-right: 0;
+	        }
+	        @media (min-width: $screen-sm) {
+	          padding-right: 5px;
+	          padding-left: 5px;
+	        }
+
+	        .form-type-textfield label {
+            position: absolute;
+            bottom: 40px;
+            color: white;
+            @media (max-width: $screen-sm) {
+              display: none;
+            }
+          }
+          .form-item-arrival-date label {
+            display: none;
+          }
+	        .help-block {// Removed the help text "E.g.,
+	          display: none;
+	        }
+	      }
+
+	      .end-date {
+	        float: right;
+	        @include make-xs-column(12);
+	        @include make-sm-column(6);
+	        margin-bottom: 15px;
+	        @media (max-width: $screen-sm) {
+	          padding-right: 0;
+	        }
+	        @media (min-width: $screen-sm) {
+	          padding-right: 5px;
+	          padding-left: 5px;
+	        }
+	        .form-type-textfield label {
+            position: absolute;
+            bottom: 40px;
+            color: white;
+            @media (max-width: $screen-sm) {
+              display: none;
+            }
+          }
+          .form-item-departure-date label {
+            display: none;
+          }
+	        .help-block {// Removed the help text "E.g., 2016-03-05"
+	          display: none;
+	        }
+	      }
+	    }
+      .listing-date-range {
+        @include make-sm-column(6.5);
+        @media (max-width: $screen-sm) {
+          padding-right: 0;
+        }
+      }
+      .form-item-group-size {
+        @include make-xs-column(12);
+        @include make-sm-column(1.5);
+        @media (min-width: $screen-sm) {
+          padding: 0 7px;
+        }
+        select {
+          width: 100%;
+        }
+      }
+      .listing-availability-search-submit,
+	    .locanda-availability-search-submit,
+	    .search-availability-submit,
+	    .search-submit {
+	      @include make-xs-column(12);
+	      @include make-sm-column(3.5);
+	      .form-submit {
+	        text-transform: capitalize;
+	        padding: 6px;
+	        font-size: 14px;
+	        width: 100%;
+          @include button-variant($btn-success-color, $btn-success-bg, $btn-success-border);
+	      }
+	    }
+      .listing-availability-search-submit {
+        @include make-sm-column(3.5);
+        @media (min-width: $screen-sm) {
+          padding: 0 5px;
+          button {
+            border-radius: 2px;
+          }
+        }
+      }
+      label {
+        position: absolute;
+        bottom: 40px;
+        color: white;
+        @media (max-width: $screen-sm) {
+          display: none;
+        }
+      }
+	    input, select, .form-control {
+	      border-radius: 2px;
+	      -webkit-appearance: inherit;
+	      -moz-appearance: inherit;
+	      -webkit-border-radius: 2px;
+	      color: #353535;
+	      height: 35px;
+	      font-size: 15px;
+	      &.form-text::-webkit-input-placeholder {
+	        color: #c9c9c9;
+	      }
+	      &.form-text::-moz-placeholder {
+	        color: #c9c9c9;
+	      }
+	      &.form-text:-moz-placeholder {
+	        color: #c9c9c9;
+	      }
+    	}
+    }
+	}
+	.pane-roomify-property-field-sp-highlight-image1,
+  .pane-roomify-property-field-sp-highlight-image2,
+  .pane-roomify-property-field-sp-highlight-image3,
+  .pane-roomify-property-field-sp-highlight-image1-cap,
+  .pane-roomify-property-field-sp-highlight-image2-cap,
+  .pane-roomify-property-field-sp-highlight-image3-cap {
+    img {
+      margin: 10px auto 10px auto;
+      border: 1px solid #ececec;
+      border-radius: 2px;
+      @media (max-width: $screen-sm) {
+        margin-top: 60px;
+      }
+    }
+    .field-type-text {
+      margin-bottom: 50px;
+      text-align: center;
+      font-weight: 400;
+    }
+  }
+	.pane-roomify-property-field-sp-short-description {
+		display: inline-block;
+    width: 100%;
+    padding: 10px 0;
+    font-size: 26px;
+    text-align: center;
+    margin-bottom: 50px;
+    line-height: 1.5em;
+    @media (max-width: $screen-xs) {
+      margin-bottom: 0;
+    }
+	}
+  .pane-roomify-travel-highlights {
+    margin-top: 40px;
+  }
+	.panel-content-wrapper,
+	.panel-content-bottom {
+		@include container-fixed;
+
+    @media (min-width: $screen-sm-min) {
+      width: $container-sm;
+    }
+    @media (min-width: $screen-md-min) {
+      width: $container-md;
+    }
+    @media (min-width: $screen-lg-min) {
+      width: $container-lg;
+    }
+	}
+	.panel-content-bottom {
+		margin-bottom: 70px;
+    margin-top: 35px;
+		@media (min-width: $screen-md) {
+      .ui-tabs .ui-tabs-nav {
+        border-width: 1px;
+        li a {
+          padding: 0px 20px;
+        }
+        li.ui-state-default {
+          border-width: 1px;
+          border-bottom: 0;
+          float: left;
+        }
+      }
+    }
+    #property-description-tab {
+      background: url("../images/description.png") center center no-repeat;
+      background: url("../images/description.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      position: relative;
+      top: 4px;
+      right: 6px;
+    }
+    #property-amenities-tab {
+      background: url("../images/amenities.png") center center no-repeat;
+      background: url("../images/amenities.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      position: relative;
+      top: 3px;
+      right: 6px;
+    }
+    #property-policies-tab {
+      background: url("../images/policies.png") center center no-repeat;
+      background: url("../images/policies.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      position: relative;
+      top: 4px;
+      right: 6px;
+    }
+    #property-location-tab {
+      background: url("../images/location_tab.png") center center no-repeat;
+      background: url("../images/location_tab.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      position: relative;
+      top: 4px;
+      right: 4px;
+    }
+    #property-rooms-tab {
+      background: url("../images/property_type_tab.png") center center no-repeat;
+      background: url("../images/property_type_tab.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      width: 17px;
+      height: 17px;
+      position: relative;
+      top: 3px;
+      right: 6px;
+    }
+    #property-reviews-tab {
+      background: url("../images/star.png") center center no-repeat;
+      background: url("../images/star.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      width: 17px;
+      height: 17px;
+      position: relative;
+      top: 3px;
+      right: 6px;
+    }
+    #property-gallery-tab {
+      background: url("../images/gallery.png") center center no-repeat;
+      background: url("../images/gallery.svg") center center no-repeat, linear-gradient(transparent, transparent);
+      display: inline-block;
+      width: 17px;
+      height: 17px;
+      position: relative;
+      top: 3px;
+      right: 6px;
+    }
+  }
+  // Property Amenities.
+  .pane-roomify-property-field-sp-amenities {
+    .field-name-field-sp-amenities {
+      .field-item.even,
+      .field-item.odd {
+        display: inline-block;
+        margin-right: 10px;
+        margin-bottom: 10px;
+        &:not(:last-child) {
+          &::after {
+            display: inline-block;
+            content: "\25cf";
+            font-size: 0.7em;
+            margin-left: 10px;
+            opacity: 0.5;
+            bottom: 1px;
+            position: relative;
+          }
+        }
+      }
+    }
+  }
+  /* PROPERTY TYPES */
+  .view-property-travel {
+    display: inline-block;
+    width: 100%;
+    padding: 18px;
+    margin-top: 20px;
+    margin-bottom: 40px;
+    @media (max-width: $screen-xs) {
+      padding: 0;
+    }
+    .views-row {
+      display: inline-block;
+      width: 100%;
+      margin-bottom: 25px;
+      margin-bottom: 25px;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 25px;
+      position: relative;
+      &.views-row-last {
+        border: none;
+      }
+      .views-field-nothing {
+        width: 100%;
+        margin-bottom: 10px;
+        display: inline-block;
+        .property-details {
+          float: none;
+          @media (max-width: $screen-xs) {
+            width: 100%;
+            display: inline-block;
+          }
+        }
+        @media (min-width: $screen-sm) {
+          width: 25%;
+          display: inline-block;
+          float: left;
+          .property-details {
+            float: right;
+          }
+        }
+      }
+      .views-field-name {
+        width: 100%;
+        margin-bottom: 10px;
+        @media (min-width: $screen-sm) {
+          width: 75%;
+          display: inline-block;
+          float: left;
+        }
+        a {
+          font-size: 20px;
+          margin-bottom: 0px;
+          display: inline-block;
+          color: initial;
+          @media (min-width: $screen-md) {
+            font-size: 24px;
+          }
+        }
+      }
+      .views-field-field-st-description {
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+      .views-field-field-st-gallery {
+        display: inline-block;
+        float: left;
+        margin-right: 20px;
+        max-width: 270px;
+        @media (max-width: $screen-xs) {
+          margin-bottom: 15px;
+          float: none;
+        }
+        img {
+          border-radius: 2px;
+        }
+      }
+      .views-field-field-st-gallery-1 {
+        display: inline-block;
+        width: 100%;
+        margin-top: 20px;
+        img {
+          width: 70px;
+          margin-right: 10px;
+          margin-bottom: 10px;
+          display: inline-block;
+          float: left;
+        }
+      }
+      .views-field-book-this {
+        display: inline-block;
+        width: 100%;
+        margin-top: 60px;
+        a.btn {
+          @include make-xs-column(4);
+          float: right;
+          max-width: 200px;
+        }
+        .info {
+          @include make-xs-column(8);
+          float: left;
+          margin-top: 5px;
+          font-weight: 400;
+          font-style: italic;
+        }
+      }
+    }
+  }
+  .view-single-property-gallery {
+    .gallery-item {
+      margin-bottom: 25px;
+      img {
+        margin: 0 auto;
+        display: table;
+        border-radius: 2px;
+      }
+    }
+  }
+  .pane-property-travel-panel-pane-1 {
+    width: 100%;
+    display: inline-block;
+    margin-top: 60px;
+    .pane-title {
+      text-align: center;
+      font-weight: 300;
+      text-transform: uppercase;
+    }
+  }
+  .views-field-field-st-amenities{
+    font-size: 12px;
+    color: #aaaaaa;
+    margin-bottom: 20px;
+  }
+  #mini-panel-property_reviews .panel-content-wrapper {
+    width: 100%;
+  }
+  .property-details {
+    .table-responsive {
+      border: none;
+    }
+    table {
+      font-size: 10px;
+      @media (max-width: $screen-xs) {
+        width: 100%;
+      }
+      tr {
+        @media (min-width: $screen-xs) {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow:ellipsis;
+        }
+      }
+      td {
+        padding: 2px 8px;
+        vertical-align: middle;
+        cursor: default;
+        display: inline-block;
+        &:empty {
+          display: none;
+        }
+      }
+      .single-beds {
+        position: relative;
+        color: #666;
+        font-size: 10px;
+        width: 50px;
+        @media (max-width: $screen-xs) {
+          width: 25%;
+        }
+        &:before {
+          background: url("../images/single_beds.png") center center no-repeat;
+          background: url("../images/single_beds.svg") center center no-repeat, linear-gradient(transparent, transparent);
+          content: "";
+          display: inline-block;
+          width: 25px;
+          height: 25px;
+          margin-right: 10px;
+          top: 6px;
+          left: 2px;
+          position: relative;
+        }
+        &:empty {
+          &:before {
+            display: none;
+          }
+        }
+      }
+      .double-beds {
+        position: relative;
+        color: #666;
+        font-size: 10px;
+        width: 50px;
+        @media (max-width: $screen-xs) {
+          width: 25%;
+        }
+        &:before {
+          background: url("../images/double_beds.png") center center no-repeat;
+          background: url("../images/double_beds.svg") center center no-repeat, linear-gradient(transparent, transparent);
+          content: "";
+          display: inline-block;
+          width: 25px;
+          height: 25px;
+          margin-right: 10px;
+          top: 6px;
+          left: 2px;
+          position: relative;
+        }
+        &:empty {
+          &:before {
+            display: none;
+          }
+        }
+      }
+      .capacity {
+        position: relative;
+        color: #666;
+        font-size: 10px;
+        width: 50px;
+        @media (max-width: $screen-xs) {
+          width: 25%;
+        }
+        &:before {
+          background: url("../images/users.png") center center no-repeat;
+          background: url("../images/users.svg") center center no-repeat, linear-gradient(transparent, transparent);
+          content: "";
+          display: inline-block;
+          width: 20px;
+          height: 25px;
+          margin-right: 10px;
+          top: 5px;
+          left: 2px;
+          position: relative;
+        }
+        &:empty {
+          &:before {
+            display: none;
+          }
+        }
+      }
+      .bathrooms {
+        position: relative;
+        color: #666;
+        width: 50px;
+        @media (max-width: $screen-xs) {
+          width: 25%;
+        }
+        font-size: 10px;
+        &:before {
+          background: url("../images/bath.png") center center no-repeat;
+          background: url("../images/bath.svg") center center no-repeat, linear-gradient(transparent, transparent);
+          content: "";
+          display: inline-block;
+          width: 19px;
+          height: 24px;
+          margin-right: 10px;
+          top: 5px;
+          left: 2px;
+          position: relative;
+        }
+        &:empty {
+          &:before {
+            display: none;
+          }
+        }
+      }
+    }
+  }
+}

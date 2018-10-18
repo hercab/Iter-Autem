@@ -1,0 +1,7 @@
+name = Group Profile2
+description = Enables Group functionality for the Profile2 module
+core = 7.x
+package = Group
+
+dependencies[] = group
+dependencies[] = profile2

@@ -1,0 +1,79 @@
+<?php
+
+/**
+ * @file
+ * Install for BAT Event State module.
+ */
+
+/**
+ * Implements hook_field_schema().
+ */
+function bat_event_state_constraints_field_schema($field) {
+  if ($field['type'] == 'bat_event_state_constraints_range') {
+    return array(
+      'columns' => array(
+        'start_date' => array(
+          'type' => 'varchar',
+          'length' => 10,
+          'not null' => TRUE,
+        ),
+        'end_date' => array(
+          'type' => 'varchar',
+          'length' => 10,
+          'not null' => TRUE,
+        ),
+        'always' => array(
+          'type' => 'int',
+          'not null' => TRUE,
+          'default' => 1,
+        ),
+        'constraint_type' => array(
+          'type' => 'varchar',
+          'length' => 20,
+          'not null' => TRUE,
+        ),
+        'start_day' => array(
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'minimum_stay' => array(
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+        'maximum_stay' => array(
+          'type' => 'int',
+          'not null' => FALSE,
+        ),
+      ),
+      'indexes' => array(
+        'range' => array(
+          'start_date',
+          'end_date',
+          'minimum_stay',
+          'maximum_stay'),
+        'range_day' => array(
+          'start_date',
+          'end_date',
+          'minimum_stay',
+          'maximum_stay',
+          'start_day'),
+      ),
+    );
+  }
+}
+
+/**
+ * Implements hook_install().
+ */
+function bat_event_state_constraints_install() {
+  foreach (bat_unit_get_type_bundles() as $bundle => $info) {
+    bat_event_state_constraints_add_event_state_range_field($bundle);
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function bat_event_state_constraints_uninstall() {
+  field_delete_field('bat_constraints_range');
+}

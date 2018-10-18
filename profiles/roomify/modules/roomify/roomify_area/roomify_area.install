@@ -1,0 +1,127 @@
+<?php
+
+/**
+ * @file
+ * Installation for roomify_area.
+ */
+
+/**
+ * Implements hook_install().
+ */
+function roomify_area_install() {
+  // Enable the page term.
+  variable_set('page_manager_term_view_disabled', FALSE);
+
+  // Create Location Vocabulary.
+  roomify_area_create_area_vocabulary();
+
+  module_load_include('inc', 'roomify_area', 'roomify_area.fields');
+  roomify_area_taxonomy_fields();
+}
+
+/**
+ * Create some new field.
+ */
+function roomify_area_update_7001() {
+  module_load_include('inc', 'roomify_area', 'roomify_area.fields');
+  roomify_area_taxonomy_fields();
+}
+
+/**
+ * Create Short Description and Featured Image fields.
+ */
+function roomify_area_update_7002() {
+  module_load_include('inc', 'roomify_area', 'roomify_area.fields');
+  roomify_area_taxonomy_fields();
+}
+
+/**
+ * Remove blogpost as paragraph and use a view of latests.
+ */
+function roomify_area_update_7004() {
+  field_delete_field('field_area_blog_posts');
+}
+
+/**
+ * Create Location field.
+ */
+function roomify_area_update_7005() {
+  module_enable(array('geofield_map'));
+  module_load_include('inc', 'roomify_area', 'roomify_area.fields');
+  roomify_area_taxonomy_fields();
+
+  $field_group = field_group_load_field_group('group_area_description', 'taxonomy_term', 'location', 'form');
+  $field_group->children[3] = 'field_area_location';
+  field_group_group_save($field_group);
+}
+
+/**
+ * Make description translatable.
+ */
+function roomify_area_update_7006() {
+  module_load_include('inc', 'roomify_area', 'roomify_area.fields');
+  roomify_area_taxonomy_fields();
+
+  $field_group = field_group_load_field_group('group_area_description', 'taxonomy_term', 'location', 'form');
+  $field_group->children[2] = 'description_field';
+  field_group_group_save($field_group);
+}
+
+/**
+ * Featured image should be required.
+ */
+function roomify_area_update_7007() {
+
+  $instance_info = field_read_instance('taxonomy_term', 'field_area_featured_image', 'location');
+  $instance_info['required'] = 1;
+  field_update_instance($instance_info);
+}
+
+/**
+ * Add a dummy image to featured images empty.
+ */
+function roomify_area_update_7008() {
+  $location = taxonomy_vocabulary_machine_name_load('location');
+  $areas = taxonomy_get_tree($location->vid);
+
+  foreach ($areas as $term) {
+    $area = taxonomy_term_load($term->tid);
+    if (!field_get_items('taxonomy_term', $area, 'field_area_featured_image')) {
+      $image_file = file_get_contents(drupal_get_path('module', 'roomify_area') . '/images/800x600.png');
+      $image_file = file_save_data($image_file, roomify_system_file_dir() . 'area-test.png', FILE_EXISTS_RENAME);
+
+      $area->field_area_featured_image[LANGUAGE_NONE][0] = array(
+        'fid' => $image_file->fid,
+        'filename' => $image_file->filename,
+        'filemime' => $image_file->filemime,
+        'uri' => $image_file->uri,
+        'status' => 1,
+        'display' => 1,
+      );
+      taxonomy_term_save($area);
+    }
+  }
+}
+
+/**
+ * Use correct widget for area location field.
+ */
+function roomify_area_update_7009() {
+  $instance_info = field_read_instance('taxonomy_term', 'field_area_location', 'location');
+  $instance_info['widget'] = array(
+    'active' => 1,
+    'module' => 'geofield_gmap',
+    'settings' => array(
+      'click_to_place_marker' => FALSE,
+      'confirm_center_marker' => FALSE,
+      'map_type' => 'ROADMAP',
+      'marker_draggable' => 0,
+      'scrollwheel' => 0,
+      'zoom_after_address_change' => TRUE,
+    ),
+    'type' => 'geofield_gmap',
+    'weight' => 3,
+  );
+
+  field_update_instance($instance_info);
+}
