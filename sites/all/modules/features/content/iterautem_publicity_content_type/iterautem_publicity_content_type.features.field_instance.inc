@@ -2250,7 +2250,7 @@ function iterautem_publicity_content_type_field_default_field_instances() {
     'bundle' => 'publicity',
     'default_value' => array(
       0 => array(
-        'day' => '',
+        'day' => 0,
         'starthours' => '0800',
         'endhours' => 2300,
       ),

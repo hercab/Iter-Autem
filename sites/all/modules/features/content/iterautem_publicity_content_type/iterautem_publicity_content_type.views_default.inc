@@ -890,7 +890,7 @@ function iterautem_publicity_content_type_views_default_views() {
   $handler->display->display_options['header']['area']['id'] = 'area';
   $handler->display->display_options['header']['area']['table'] = 'views';
   $handler->display->display_options['header']['area']['field'] = 'area';
-  $handler->display->display_options['header']['area']['content'] = '<div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href="node/add/publicity">+ Add Publicity</a></div>';
+  $handler->display->display_options['header']['area']['content'] = '<div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href="/node/add/publicity">+ Add Publicity</a></div>';
   $handler->display->display_options['header']['area']['format'] = 'filtered_text';
   /* No results behavior: Global: Text area */
   $handler->display->display_options['empty']['area']['id'] = 'area';
@@ -1011,7 +1011,7 @@ function iterautem_publicity_content_type_views_default_views() {
     t('‹ previous'),
     t('next ›'),
     t('last »'),
-    t('<div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href="node/add/publicity">+ Add Publicity</a></div>'),
+    t('<div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href="/node/add/publicity">+ Add Publicity</a></div>'),
     t('<h2>You don\'t have any publicities yet! Please add a Publicity. </h2><div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href="node/add/publicity">+ Add Publicity</a></div>.'),
     t('All'),
     t('Publicity title'),
