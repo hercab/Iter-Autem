@@ -18,6 +18,7 @@ features[features_overrides][] = views_view.properties.display|properties_view_a
 features[features_overrides][] = views_view.properties.display|properties_view_all|display_options|fields|nothing_2
 features[features_overrides][] = views_view.properties.display|properties_view_all|display_options|fields|php
 features[features_overrides][] = views_view.properties.display|properties_view_all|display_options|fields|uid
+features[features_overrides][] = views_view.properties.display|properties_view_all|display_options|fields|views_bulk_operations_1
 features_exclude[features_overrides][panels_mini.dashboard.display|content|new-ca4af337-73f4-4ba2-a2df-15172b0902f0|access|plugins|0|settings|php] = panels_mini.dashboard.display|content|new-ca4af337-73f4-4ba2-a2df-15172b0902f0|access|plugins|0|settings|php
 features_exclude[features_overrides][panels_mini.dashboard.dashboard] = panels_mini.dashboard.dashboard
 project path = sites/all/modules/features/overrides
