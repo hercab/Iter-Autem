@@ -77,7 +77,8 @@ function iterautem_publicity_content_type_roomify_rights_alter(&$permissions){
 
     }
     if(isset($permissions['property owner'])){
-
+        $permissions['property owner'] += array('create location content' => 'create location content');
+        $permissions['property owner'] += array('edit own location content' => 'edit own location content');
     }
 }
 
