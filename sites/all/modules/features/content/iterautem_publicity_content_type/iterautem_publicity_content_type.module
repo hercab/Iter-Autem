@@ -46,6 +46,26 @@ function iterautem_publicity_content_type_preprocess_flag(&$variables){
     }
 }
 
+/**
+ * Allows modules to define roles and permissions.
+ */
+function iterautem_publicity_content_type_roomify_rights() {
+    $rights['iterautem_publicity_content_type'] = array(
+        'Publicity Manager' => array(
+            'access content',
+            'create publicity content',
+            'edit own publicity content',
+            'create location content',
+            'edit own location content',
+            'view own unpublished content',
+            'view revisions',
+            'revert revisions',
+        ),
+    );
+
+    return $rights;
+}
+
 function iterautem_publicity_content_type_roomify_rights_alter(&$permissions){
     if(isset($permissions['authenticated user'])) {
         $permissions['authenticated user'] += array('flag bookmarks' => 'flag bookmarks');
@@ -57,8 +77,7 @@ function iterautem_publicity_content_type_roomify_rights_alter(&$permissions){
 
     }
     if(isset($permissions['property owner'])){
-        $permissions['property owner'] += array('create publicity content' => 'create publicity content');
-        $permissions['property owner'] += array('edit own publicity content' => 'edit own publicity content');
+
     }
 }
 

@@ -897,7 +897,7 @@ function iterautem_publicity_content_type_views_default_views() {
   $handler->display->display_options['empty']['area']['table'] = 'views';
   $handler->display->display_options['empty']['area']['field'] = 'area';
   $handler->display->display_options['empty']['area']['empty'] = TRUE;
-  $handler->display->display_options['empty']['area']['content'] = '<h2>You don\'t have any publicities yet! Please add a Publicity. </h2><div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href="node/add/publicity">+ Add Publicity</a></div>.';
+  $handler->display->display_options['empty']['area']['content'] = '<h2>You don\'t have any publicities yet! Please add a Publicity. </h2><div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href="/node/add/publicity">+ Add Publicity</a></div>.';
   $handler->display->display_options['empty']['area']['format'] = 'filtered_text';
   /* Field: Field: Search/Featured Image */
   $handler->display->display_options['fields']['field_sp_featured_image']['id'] = 'field_sp_featured_image';
@@ -988,6 +988,13 @@ function iterautem_publicity_content_type_views_default_views() {
 
   /* Display: Publicities View All */
   $handler = $view->new_display('page', 'Publicities View All', 'publicity_view_all');
+  $handler->display->display_options['defaults']['header'] = FALSE;
+  /* Header: Global: PHP */
+  $handler->display->display_options['header']['php']['id'] = 'php';
+  $handler->display->display_options['header']['php']['table'] = 'views';
+  $handler->display->display_options['header']['php']['field'] = 'php';
+  $handler->display->display_options['header']['php']['php_output'] = '<div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href=<?php global $base_url; print $base_url . "/node/add/publicity" ?>>+ Add Publicity</a></div>
+';
   $handler->display->display_options['path'] = 'admin/publicity/view-all';
   $handler->display->display_options['menu']['type'] = 'normal';
   $handler->display->display_options['menu']['title'] = 'Publicities';
@@ -1012,7 +1019,7 @@ function iterautem_publicity_content_type_views_default_views() {
     t('next ›'),
     t('last »'),
     t('<div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href="/node/add/publicity">+ Add Publicity</a></div>'),
-    t('<h2>You don\'t have any publicities yet! Please add a Publicity. </h2><div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href="node/add/publicity">+ Add Publicity</a></div>.'),
+    t('<h2>You don\'t have any publicities yet! Please add a Publicity. </h2><div><a class="ctools-use-modal ctools-modal-roomify-dashboard-modal-style" href="/node/add/publicity">+ Add Publicity</a></div>.'),
     t('All'),
     t('Publicity title'),
     t('Publicities View All'),

@@ -14,8 +14,8 @@ function iterautem_publicity_content_type_user_default_permissions() {
   $permissions['create publicity content'] = array(
     'name' => 'create publicity content',
     'roles' => array(
+      'Publicity Manager' => 'Publicity Manager',
       'administrator' => 'administrator',
-      'property owner' => 'property owner',
       'roomify manager' => 'roomify manager',
     ),
     'module' => 'node',
@@ -53,8 +53,8 @@ function iterautem_publicity_content_type_user_default_permissions() {
   $permissions['edit own publicity content'] = array(
     'name' => 'edit own publicity content',
     'roles' => array(
+      'Publicity Manager' => 'Publicity Manager',
       'administrator' => 'administrator',
-      'property owner' => 'property owner',
     ),
     'module' => 'node',
   );
