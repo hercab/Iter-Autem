@@ -19,7 +19,7 @@ scripts[] = dataTables/media/js/jquery.dataTables.min.js
 ;scripts[] = default_skin.js
 ; -----------------------------------------------------------
 ;  Sample stylesheet inclusion the usual types are supported (e.g. screen, print)
-;  Also not that if you ar using mMPDF or Prince, you can speify stylesheets 
+;  Also not that if you ar using mMPDF or Prince, you can specify stylesheets
 ;  in the form
 ; 
 ;stylesheets[all][] = table_padding.css

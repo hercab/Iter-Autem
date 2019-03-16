@@ -1,65 +1,36 @@
+/**************************************************
+                    General
+ *************************************************/
 
-/* PDF */
+/********** WEB **********/
 
-/*@page {*/
-    /*size: 15cm 37cm;	*//* width height  <length>{1,2} | auto | portrait | landscape NB 'em' and 'ex' % are not allowed */
-    /*margin: 10%;	*//* % of page-box width for LR, height for TB */
-    /*margin-header: 5mm;*/
-    /*margin-footer: 5mm;*/
-    /*margin-left: 4cm;*/
-    /*margin-right: 2cm;*/
-    /*odd-header-name: myHeader2Odd;*/
-    /*even-header-name: html_myHTMLHeaderEven;*/
-    /*odd-footer-name: html_myHTMLFooterOdd;*/
-    /*even-footer-name: myFooter2Even;*/
-    /*marks: crop;	 *//* crop | cross | none */
-/*}*/
-.paging{
-    page-break-after: always;
+.clear-fix-web{
+    display: block;
+    visibility: hidden;
+    clear: both;
 }
 
-.clear-fix{
+/********** END WEB **********/
+
+/********** PDF **********/
+
+.clear-fix-pdf {
     display: none;
     clear: both;
     height: 0;
 }
 
-.clear-fix.web{
-    display: block;
-    visibility: hidden;
-}
-/* END PDF*/
-
-.contact-banner{
-    height: 124px;
-    background-color: #280929;
+.paging {
+    page-break-after: always;
 }
 
-.contact-banner .maleta {
-    float: left;
-    text-align: right;
-    width: 30%;
-}
+/********** END PDF **********/
 
-.contact-banner .subtitle {
-    color: #FFF;
-    padding-top: 30px;
-    float: left;
-    width: 40%;
-    text-align: center;
+/**************************************************
+                    Header
+ *************************************************/
 
-}
-.contact-banner .subtitle span {
-    font-weight: bold;
-}
-
-.container-tg{
-    width: 900px;
-    margin: 0 auto;
-    font-size: 12px;
-    letter-spacing: -0.5px;
-}
-
+/********** ALL **********/
 .logo-header{
     text-align: center;
 }
@@ -67,8 +38,11 @@
 .area-image{
     text-align: center;
 }
+/********** END ALL **********/
 
-/* ************ Properties ****** */
+/*************************************************
+                        Properties
+ *************************************************/
 
 /* *** ALL ***** */
 
@@ -107,9 +81,8 @@
 
 /**** END ALL *****/
 
-
 /******  WEB ******/
-.property-booking.web .property-details{
+.property-booking-web .property-details{
     padding-top: 15px;
     padding-bottom: 15px;
     width: 50%;
@@ -118,23 +91,54 @@
 
 /******** PDF ********/
 
-.property-details{
+.property-booking-pdf .property-details{
     width: 45%;
 }
 
 /****** END PDF *****/
 
-/**** END PROPERTIES *****/
 
+/*************************************************
+                        Contact Banner
+ *************************************************/
 
+.contact-banner{
+    height: 124px;
+    background-color: #280929;
+}
 
-/************************
- ******Publicity*********
- ************************/
+.contact-banner .maleta {
+    float: left;
+    text-align: right;
+    width: 30%;
+}
 
-/* *** ALL ***** */
+.contact-banner .subtitle {
+    color: #FFF;
+    padding-top: 30px;
+    float: left;
+    width: 40%;
+    text-align: center;
 
-.publicity-container{
+}
+.contact-banner .subtitle span {
+    font-weight: bold;
+}
+
+.container-tg {
+    width: 900px;
+    margin: 0 auto;
+    font-size: 12px;
+    letter-spacing: -0.5px;
+}
+
+/*************************************************
+                        Publicity
+ *************************************************/
+
+/***** ALL ******/
+
+.publicity-container {
     display: block;
     width: 100%;
     padding-top: 30px;
@@ -144,40 +148,39 @@
     text-align: center;
 }
 
-.publicity-container .publicity-element {
-    width: 20%;
+.publicity-container .bussiness_type_container {
+    width: 50%;
+    float: left;
+}
+
+.publicity-container .bussiness_type-40 {
+    width: 100%;
+}
+
+.publicity-container .bussiness_type_container .publicity-element {
+    width: 50%;
     padding: 0 10px;
     float: left;
     line-height: 1.5em;
     margin-bottom: 15px;
 }
 
+.publicity-container .bussiness_type-40 .publicity-element {
+    width: 25%;
+}
+
 .publicity-container .bussiness_type_container h4{
     border-bottom: 1px solid;
     padding-bottom: 5px;
 }
-/******* END ALL *****/
 
-/******* WEB ********/
+/***** END ALL ******/
 
-/********* END WEB ****/
+/*************************************************
+                        Location
+ *************************************************/
 
-/******* PDF ********/
-
-/********* END PDF ****/
-
-/**************************
- ****** END PUBLICITY *****
- **************************/
-
-/************************
- ****** Location *********
- ************************/
-
-/****** ALL **********/
-.header-location{
-
-}
+/************ ALL **********/
 
 .header-location .subtitle {
     color: white;
@@ -190,26 +193,12 @@
     height: 156px;
 }
 
+/************ END ALL **********/
 
-/******* END ALL *****/
+/*************************************************
+                        Footer
+ *************************************************/
 
-/******* PDF ********/
-
-
-/********* END PDF ****/
-
-
-
-/******* WEB ********/
-
-
-
-/********* END WEB ****/
-
-/*****************
-******FOOTER******
-******************/
-
-.footer-guide{
+.footer-guide {
     background-color: #D3CACB;
 }

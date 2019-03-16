@@ -49,7 +49,7 @@
             </div>
             <div class="email-body container-tg">
 
-                <div id="area" class="paging" frx:block="guest/areas" frx:foreach="*">
+                <div id="area" frx:block="guest/areas" frx:foreach="*">
 
                     <header>
                         <div class="logo-header"><img src="{skin.dir}/logo_ia_guide.jpg"></img></div>
@@ -58,7 +58,7 @@
                     <div class="area-image">{area.field_area_featured_image}</div>
 
                     <div id="properties" class="property-container" frx:block="guest/get_properties_from_area">
-                        <div id="property" class="property-booking web" frx:foreach="*">
+                        <div id="property" class="property-booking-{report.format}" frx:foreach="*">
 
                             <div class="property-image">{field_sp_featured_image}</div>
                             <div class="property-details">
@@ -70,9 +70,11 @@
                             </div>
 
                         </div>
-                        <div class="clear-fix web">.</div>
-
+                        <div class="clear-fix-{report.format}">.</div>
                     </div>
+
+                    <div class="clear-fix-{report.format}">.</div>
+
                     <div class="contact-banner">
                         <div class="maleta"><img src="{skin.dir}/maleta.jpg" width="150" height="124"/></div>
                         <div class="subtitle">
@@ -81,10 +83,10 @@
                     </div>
 
                     <div id="publicity" class="publicity-container">
-                        <h3>Le sugerimos lugares que pueden ser de <br/> utiliad durante su estancia...</h3>
-                        <div id="bussiness_type" class="bussiness_type_container" frx:block="guest/get_bussiness_type" frx:foreach="*">
+                        <h3>Le sugerimos lugares que pueden ser de <br/> utilidad durante su estancia...</h3>
+                        <div id="bussiness_type" class="bussiness_type_container bussiness_type-{bussiness_type.bussiness_type_tid}" frx:block="guest/get_bussiness_type" frx:foreach="*">
                             <h4>{bussiness_type.name}</h4>
-                            <div  id="pub" class="publicity-element" frx:parameters="area_id={area.area_id}" frx:block="guest/get_publicity" frx:foreach="*">
+                            <div  id="pub" class="publicity-element" frx:parameters="area_id={area.area_id}&amp;bussiness_type_tid={bussiness_type.bussiness_type_tid}" frx:block="guest/get_publicity" frx:foreach="*" >
                                     <div style="margin-bottom: 15px">{pub.field_sp_featured_image}</div>
                                     <strong style="text-transform: uppercase">{pub.title}</strong>
                                     <div>{pub.field_sp_short_description}</div>
@@ -92,11 +94,11 @@
                                     <div><strong>HOR: </strong>{pub.field_full_time_work}{pup.field_work_hours}</div>
                                     <div><strong>DIR: </strong>{pub.field_sp_address}</div>
                             </div>
-                            <div class="clear-fix web">.</div>
                         </div>
-                        <div class="clear-fix web">.</div>
-
                     </div>
+
+                    <div class="clear-fix-{report.format}">.</div>
+
                     <div id="location" class="location-container">
                         <div class="header-location">
                             <div frx:renderer="FrxImageStyle" frx:image_style="forena_banner" frx:block="guest/get_uri_image_from_area"></div>
